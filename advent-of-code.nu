@@ -8,6 +8,11 @@ def "print-error" [message: string] {
     print -e $"❌ ERROR: ($message)"
 }
 
+# Advent of Code runner
+export def "aoc" [year: int, day: int] {
+    cargo run --release -q -- -y $year -d $day
+}
+
 ###*
 # Sets up a new solution crate for a given year.
 #
@@ -229,3 +234,5 @@ export def "get-input" [
         return
     }
 }
+
+
