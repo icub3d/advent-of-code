@@ -1,0 +1,9 @@
+[package]
+name = "runner"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aoc_2015 = { path = "../solutions/aoc_2015" }
+anyhow = {workspace = true}
+clap = { version = "4.5.46", features = ["derive"] }

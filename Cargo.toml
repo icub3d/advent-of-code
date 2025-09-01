@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "runner",
+    "solutions/*", # include all years
+]
+
+resolver = "3"
+
+[workspace.dependencies]
+anyhow = "1.0"
