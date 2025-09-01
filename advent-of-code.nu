@@ -125,19 +125,17 @@ export def "new-day" [
     }
     let day_boiler = 'const INPUT: &' + "'" + 'static str = include_str!("inputs/day01.txt");
 
-pub fn p1() -> anyhow::Result<()> {
-    println!("p1: not implemented");
-    Ok(())
+pub fn p1() -> anyhow::Result<i32> {
+    Ok(0)
 }
 
-pub fn p2() -> anyhow::Result<()> {
-    println!("p2: not implemented");
-    Ok(())
+pub fn p2() -> anyhow::Result<i32> {
+    Ok(0)
 }
 
 pub fn solve() -> anyhow::Result<()> {
-    p1()?;
-    p2()?;
+    println!("p1: {}", p1(INPUT)?);
+    println!("p2: {}", p2(INPUT)?);
     Ok(())
 }
 '
