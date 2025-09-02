@@ -233,4 +233,35 @@ export def "get-input" [
     }
 }
 
+# Uploads a day's solution file to a GitHub Gist using the gh CLI.
+# Usage: upload-gist 2015 1 [--public]
+export def "upload-gist" [
+    year: int, # The Advent of Code year (e.g., 2015)
+    day: int,  # The day number (e.g., 1)
+] {
+    let year_str = $"($year)"
+    let day_str = (if $day < 10 { ("day0" ++ ($day | into string)) } else { ("day" ++ ($day | into string)) })
+    let file_path = ("solutions/aoc_" ++ $year_str ++ "/src/" ++ $day_str ++ ".rs")
 
+    if not ($file_path | path exists) {
+        print-error ("Solution file not found: " ++ $file_path)
+        return
+    }
+
+    let gist_desc = ($"Advent of Code ($year_str) Day ($day) Solution")
+    let public_flag = "--public"
+
+    print ("🚀 Uploading " ++ $file_path ++ " to GitHub Gist...")
+    let cmd = ["gh" "gist" "create" $file_path "--desc" $gist_desc $public_flag]
+    let result = do -i { ^$cmd }
+    if ($result | describe) == 'string' {
+        print-info "Gist uploaded successfully!"
+        print $result
+    } else if ($result.exit_code? | default 1) == 0 {
+        print-info "Gist uploaded successfully!"
+        print ($result.stdout? | default "")
+    } else {
+        print-error "Failed to upload Gist."
+        print ($result.stderr? | default $result)
+    }
+}
