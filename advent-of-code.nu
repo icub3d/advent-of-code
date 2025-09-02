@@ -123,13 +123,13 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = 'const INPUT: &' + "'" + 'static str = include_str!("inputs/day01.txt");
+    let day_boiler = 'const INPUT: &' + "'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
 
-pub fn p1() -> anyhow::Result<i32> {
+pub fn p1(input: &str) -> anyhow::Result<i32> {
     Ok(0)
 }
 
-pub fn p2() -> anyhow::Result<i32> {
+pub fn p2(input: &str) -> anyhow::Result<i32> {
     Ok(0)
 }
 
