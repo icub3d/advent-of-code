@@ -1,9 +1,11 @@
+pub mod day04;
 pub mod day03;
 pub mod day02;
 pub mod day01;
  
 pub fn run(day: u8) -> anyhow::Result<()> {
     match day {
+        4 => day04::solve()?,
         3 => day03::solve()?,
         2 => day02::solve()?,
         1 => day01::solve()?,

@@ -6,3 +6,6 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+hex-literal = "1.0.0"
+md-5 = "0.10.6"
+rayon = "1.11.0"
