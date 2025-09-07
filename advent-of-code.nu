@@ -133,9 +133,13 @@ pub fn p2(input: &str) -> anyhow::Result<i32> {
     Ok(0)
 }
 
+use std::time::Instant;
+
 pub fn solve() -> anyhow::Result<()> {
-    println!("p1: {}", p1(INPUT)?);
-    println!("p2: {}", p2(INPUT)?);
+    let now = Instant::now();
+    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    let now = Instant::now();
+    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
     Ok(())
 }
 '
