@@ -123,23 +123,22 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = 'const INPUT: &' + "'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
+    let day_boiler = "use std::time::Instant;\nconst INPUT: &'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
 
-pub fn p1(input: &str) -> anyhow::Result<i32> {
-    Ok(0)
+pub fn p1(input: &str) -> i32 {
+    0
 }
 
-pub fn p2(input: &str) -> anyhow::Result<i32> {
-    Ok(0)
+pub fn p2(input: &str) -> i32 {
+    0
 }
 
-use std::time::Instant;
 
 pub fn solve() -> anyhow::Result<()> {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    println!("p1: {} ({:?})", p1(INPUT), now.elapsed());
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
+    println!("p2: {} ({:?})", p2(INPUT), now.elapsed());
     Ok(())
 }
 '

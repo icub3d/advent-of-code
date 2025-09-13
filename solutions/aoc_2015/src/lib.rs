@@ -1,3 +1,9 @@
+pub mod day13;
+pub mod day12;
+pub mod day11;
+pub mod day10;
+pub mod day09;
+pub mod day08;
 pub mod day07;
 pub mod day06;
 pub mod day05;
@@ -8,6 +14,12 @@ pub mod day01;
  
 pub fn run(day: u8) -> anyhow::Result<()> {
     match day {
+        13 => day13::solve()?,
+        12 => day12::solve()?,
+        11 => day11::solve()?,
+        10 => day10::solve()?,
+        9 => day09::solve()?,
+        8 => day08::solve()?,
         7 => day07::solve()?,
         6 => day06::solve()?,
         5 => day05::solve()?,
