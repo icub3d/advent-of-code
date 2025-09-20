@@ -138,6 +138,8 @@ export def "new-day" [
     let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
     let day_file = $"($src_path)/($day_mod).rs"
 
+    get-input $year $day
+
     # --- 1. Validation ---
     if not ($crate_path | path exists) {
         print-error $"Crate for year ($year_str) does not exist at '($crate_path)'!"
