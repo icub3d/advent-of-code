@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day13.txt");
+const INPUT: &'static str = include_str!("inputs/day14.txt");
 
 pub fn p1(input: &str) -> i32 {
     0
@@ -9,6 +9,7 @@ pub fn p1(input: &str) -> i32 {
 pub fn p2(input: &str) -> i32 {
     0
 }
+
 
 pub fn solve() -> anyhow::Result<()> {
     let now = Instant::now();

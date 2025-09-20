@@ -13,6 +13,32 @@ export def "aoc" [year: int, day: int] {
     cargo run --release -q -- -y $year -d $day
 }
 
+export def "aoc watch" [
+    year: int, 
+    day: int,
+    --test # Run tests instead of the solution
+] {
+    watch --quiet . --glob=**/*.rs {|| 
+        try { 
+            if $test {
+                aoc test $year $day
+            } else {
+                aoc $year $day 
+            }
+        } catch { |err| 
+            print-error $"Compilation failed: ($err.msg)"
+            print "🔄 Watching for changes..."
+        }
+    }
+}
+
+export def "aoc test" [year: int, day: int] {
+    let crate_name = $"aoc_($year)"
+    let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
+    
+    cargo test --quiet -p $crate_name $day_mod
+}
+
 ###*
 # Sets up a new solution crate for a given year.
 #
@@ -123,7 +149,7 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = "use std::time::Instant;\nconst INPUT: &'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
+    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
 
 pub fn p1(input: &str) -> i32 {
     0
