@@ -18,7 +18,8 @@ export def "aoc watch" [
     day: int,
     --test # Run tests instead of the solution
 ] {
-    watch --quiet . --glob=**/*.rs {|| 
+    watch --quiet . --glob=**/*.rs {||
+        clear
         try { 
             if $test {
                 aoc test $year $day
@@ -288,11 +289,84 @@ export def "upload-gist" [
     if ($result | describe) == 'string' {
         print-info "Gist uploaded successfully!"
         print $result
+        return $result
     } else if ($result.exit_code? | default 1) == 0 {
         print-info "Gist uploaded successfully!"
         print ($result.stdout? | default "")
+        return ($result.stdout? | default "")
     } else {
         print-error "Failed to upload Gist."
         print ($result.stderr? | default $result)
+        return ($result.stderr? | default $result)
+    }
+}
+
+# Generate a YouTube description with timestamps from a stage progress JSON file.
+# Usage: youtube-desc path/to/2015-13.json
+export def "youtube-desc" [
+    file: string # The path to the JSON file (e.g., '2015-13.json')
+] {
+    let file = ($file | path expand)
+
+    # Validate file exists
+    if not ($file | path exists) {
+        print-error $"JSON file not found: '($file)'"
+        return
+    }
+
+    # Derive year and day from the filename (e.g., '2015-13.json')
+    let base = ($file | path basename)
+    let base_no_ext = ($base | str replace ".json" "")
+    let parts = ($base_no_ext | split row "-")
+    if ($parts | length) < 2 {
+        print-error "Filename must be in the format 'YEAR-DAY.json' (e.g., '2015-13.json')."
+        return
+    }
+    let year = ($parts | get 0 | into int)
+    let day = ($parts | get 1 | into int)
+
+    # --- Find or Create Gist ---
+    let filter_str = $"($year) Day ($day)"
+    let gist_id = (gh gist list --limit 1 --filter $filter_str | split column "\t" | get column1 | first)
+
+    let solution_url = if not ($gist_id | is-empty) {
+        $"https://gist.github.com/icub3d/($gist_id)"
+    } else {
+        # No gist found, so create one and capture the output URL
+        upload-gist $year $day
+    }
+
+    # Parse JSON
+    let data = (open --raw $file | from json)
+
+    # Build problem URL
+    let problem_url = $"https://adventofcode.com/($year)/day/($day)"
+
+    # Print header for description
+    print "[TODO]"
+    print ""
+    print $"Problem: ($problem_url)"
+    print $"Solution: ($solution_url)"
+    print ""
+
+    # Get stage times (fall back to empty if missing)
+    let stages = ($data | get stageTimes | default [])
+
+    # Sort stages by startMs to ensure order
+    let stages = ($stages | sort-by startMs)
+
+    if ($stages | is-empty) {
+        print-info "No 'stageTimes' found in JSON."
+        return
+    }
+
+    # Print timestamp lines, converting startMs (milliseconds) to a 'M:SS' format.
+    for $st in $stages {
+        let start_ms = ($st | get startMs | default 0)
+        let mins = ($start_ms / 60000 | into int)
+        let secs = (($start_ms mod 60000) / 1000 | into int)
+        let time_str = (if $secs < 10 { $"($mins):0($secs)" } else { $"($mins):($secs)" })
+        let name = ($st | get stageName | default "Unnamed Stage")
+        print $"($time_str) ($name)"
     }
 }

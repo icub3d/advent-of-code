@@ -11,28 +11,9 @@ You can load those helpers into your current Nushell session temporarily, or ins
 ### Quick (temporary) — load into the current session
 From Nushell, run:
 ```nu
-source ./advent-of-code.nu
+overlay use ./advent-of-code.nu
 ```
 After that you can call the helpers (examples below) in the same shell session.
-
-### Persistent (recommended) — install as an overlay
-Copy the file into Nushell's overlays directory so it is automatically available.
-
-- Linux / macOS:
-```sh
-mkdir -p ~/.config/nushell/overlays
-cp advent-of-code.nu ~/.config/nushell/overlays/advent-of-code.nu
-```
-
-- Windows (PowerShell):
-```powershell
-New-Item -ItemType Directory -Force $env:USERPROFILE\.config\nushell\overlays
-Copy-Item .\advent-of-code.nu -Destination "$env:USERPROFILE\.config\nushell\overlays\advent-of-code.nu"
-```
-
-After copying, start a new Nushell session (or `source` the file) to load the overlay.
-
-Note: overlay placement is the conventional location; if your Nushell config directory differs, place the file into the `overlays` subdirectory of your Nushell config directory.
 
 ## Important prerequisites
 - Nushell installed (nu)
