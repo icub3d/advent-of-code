@@ -63,29 +63,32 @@ fn find_hash_fast(input: &str, start_size: usize) -> anyhow::Result<i32> {
     let zeros = start_size / 2;
     let left_over = start_size % 2;
 
-    let result = (1..i32::MAX).into_par_iter().by_exponential_blocks().find_first(|&i| {
-        // Generate the hash.
-        let mut hasher = Md5::new();
-        hasher.update(input.as_bytes());
-        hasher.update(format!("{}", i).as_bytes());
-        let results = hasher.finalize();
+    let result = (1..i32::MAX)
+        .into_par_iter()
+        .by_exponential_blocks()
+        .find_first(|&i| {
+            // Generate the hash.
+            let mut hasher = Md5::new();
+            hasher.update(input.as_bytes());
+            hasher.update(format!("{}", i).as_bytes());
+            let results = hasher.finalize();
 
-        // Check to see if we got the first bytes correct.
-        if !(results[..zeros].iter().all(|&x| x == 0)) {
-            return false;
-        }
-        // If we have a leftover, check it as well.
-        if left_over > 0 {
-            if (results[zeros] >> 4) == 0 {
+            // Check to see if we got the first bytes correct.
+            if !(results[..zeros].iter().all(|&x| x == 0)) {
+                return false;
+            }
+            // If we have a leftover, check it as well.
+            if left_over > 0 {
+                if (results[zeros] >> 4) == 0 {
+                    return true;
+                }
+            } else {
+                // If we got to this point, we don't have any leftovers and all the previous bytes were zero.
                 return true;
             }
-        } else {
-            // If we got to this point, we don't have any leftovers and all the previous bytes were zero.
-            return true;
-        }
 
-        false
-    });
+            false
+        });
 
     Ok(result.unwrap_or(0))
 }

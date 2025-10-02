@@ -289,15 +289,12 @@ export def "upload-gist" [
     if ($result | describe) == 'string' {
         print-info "Gist uploaded successfully!"
         print $result
-        return $result
     } else if ($result.exit_code? | default 1) == 0 {
         print-info "Gist uploaded successfully!"
         print ($result.stdout? | default "")
-        return ($result.stdout? | default "")
     } else {
         print-error "Failed to upload Gist."
         print ($result.stderr? | default $result)
-        return ($result.stderr? | default $result)
     }
 }
 
@@ -333,7 +330,7 @@ export def "youtube-desc" [
         $"https://gist.github.com/icub3d/($gist_id)"
     } else {
         # No gist found, so create one and capture the output URL
-        upload-gist $year $day
+        upload-gist $year $day | lines | last
     }
 
     # Parse JSON

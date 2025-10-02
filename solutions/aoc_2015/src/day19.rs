@@ -4,13 +4,16 @@ const INPUT: &'static str = include_str!("inputs/day19.txt");
 
 pub fn p1(input: &str) -> usize {
     let (replacements, molecule) = input.split_once("\n\n").unwrap();
-    let replacements = replacements.lines().map(|l| l.split_once(" => ").unwrap()).collect::<Vec<(&str, &str)>>();
+    let replacements = replacements
+        .lines()
+        .map(|l| l.split_once(" => ").unwrap())
+        .collect::<Vec<(&str, &str)>>();
 
     let mut new_molecules = HashSet::new();
     for replacement in replacements {
         for (i, _) in molecule.match_indices(replacement.0) {
             let mut new_molecule = molecule.to_string();
-            new_molecule.replace_range(i..i+replacement.0.len(), replacement.1);
+            new_molecule.replace_range(i..i + replacement.0.len(), replacement.1);
             new_molecules.insert(new_molecule);
         }
     }
@@ -25,7 +28,7 @@ pub fn p2(input: &str) -> usize {
     let rn = molecule.matches("Rn").count();
     let ar = molecule.matches("Ar").count();
     let y = molecule.matches("Y").count();
-    molecule_count - rn - ar - y*2 - 1
+    molecule_count - rn - ar - y * 2 - 1
 }
 
 pub fn solve() -> anyhow::Result<()> {

@@ -38,7 +38,7 @@ pub fn p2(input: &str) -> anyhow::Result<usize> {
         .map(|l| {
             let parts: Vec<usize> = l.split('x').map(|n| n.parse::<usize>().unwrap()).collect();
             let v = parts[0] * parts[1] * parts[2];
-            let p = 2 * (parts[0] + parts[1]+ parts[2] - parts[0].max(parts[1]).max(parts[2]));
+            let p = 2 * (parts[0] + parts[1] + parts[2] - parts[0].max(parts[1]).max(parts[2]));
             v + p
         })
         .sum::<usize>();
