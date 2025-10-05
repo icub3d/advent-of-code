@@ -330,7 +330,7 @@ export def "youtube-desc" [
         $"https://gist.github.com/icub3d/($gist_id)"
     } else {
         # No gist found, so create one and capture the output URL
-        upload-gist $year $day | lines | last
+        upload-gist $year $day
     }
 
     # Parse JSON
