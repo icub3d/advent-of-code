@@ -70,10 +70,12 @@ fn p2_helper(
         });
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT), now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT), now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

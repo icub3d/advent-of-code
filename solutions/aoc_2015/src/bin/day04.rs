@@ -4,7 +4,7 @@ use rayon::prelude::*;
 const INPUT: &'static str = include_str!("inputs/day04.txt");
 
 #[allow(dead_code)]
-fn find_hash_no_format(input: &str, start_size: usize) -> anyhow::Result<i32> {
+fn find_hash_no_format(input: &str, start_size: usize) -> i32 {
     let input = input.trim();
 
     let zeros = start_size / 2;
@@ -25,18 +25,18 @@ fn find_hash_no_format(input: &str, start_size: usize) -> anyhow::Result<i32> {
         if left_over > 0 {
             let rest = results[zeros] >> 4;
             if rest == 0 {
-                return Ok(i);
+                return i;
             }
         } else {
-            return Ok(i);
+            return i;
         }
     }
 
-    Ok(0)
+    0
 }
 
 #[allow(dead_code)]
-fn find_hash(input: &str, start: &str) -> anyhow::Result<i32> {
+fn find_hash(input: &str, start: &str) -> i32 {
     let input = input.trim();
 
     for i in 1.. {
@@ -48,15 +48,15 @@ fn find_hash(input: &str, start: &str) -> anyhow::Result<i32> {
         let results = hasher.finalize();
         let hex = format!("{:x}", results);
         if hex.starts_with(start) {
-            return Ok(i);
+            return i;
         }
     }
 
-    Ok(0)
+    0
 }
 
 #[allow(dead_code)]
-fn find_hash_fast(input: &str, start_size: usize) -> anyhow::Result<i32> {
+fn find_hash_fast(input: &str, start_size: usize) -> i32 {
     let input = input.trim();
 
     // We are going to track the number or early bytes we need to be zeros. If we don't have an even number, we'll want to take the first part of the next byte (left_over).
@@ -90,25 +90,27 @@ fn find_hash_fast(input: &str, start_size: usize) -> anyhow::Result<i32> {
             false
         });
 
-    Ok(result.unwrap_or(0))
+    result.unwrap_or(0)
 }
 
-pub fn p1(input: &str) -> anyhow::Result<i32> {
+pub fn p1(input: &str) -> i32 {
     // find_hash(input, "00000")
     // find_hash_no_format(input, 5)
     find_hash_fast(input, 5)
 }
 
-pub fn p2(input: &str) -> anyhow::Result<i32> {
+pub fn p2(input: &str) -> i32 {
     // find_hash(input, "000000")
     // find_hash_no_format(input, 6)
     find_hash_fast(input, 6)
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = std::time::Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = std::time::Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

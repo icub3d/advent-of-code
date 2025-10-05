@@ -1,6 +1,6 @@
 const INPUT: &'static str = include_str!("inputs/day02.txt");
 
-pub fn p1(input: &str) -> anyhow::Result<usize> {
+pub fn p1(input: &str) -> usize {
     let total = input
         .lines()
         .map(|l| {
@@ -12,7 +12,7 @@ pub fn p1(input: &str) -> anyhow::Result<usize> {
             2 * (ab + bc + ac) + min
         })
         .sum::<usize>();
-    Ok(total)
+    total
 }
 
 #[cfg(test)]
@@ -22,17 +22,17 @@ mod tests {
     #[test]
     fn test_p1() {
         let input = "2x3x4\n1x1x10\n";
-        assert_eq!(p1(input).unwrap(), 101);
+        assert_eq!(p1(input), 101);
     }
 
     #[test]
     fn test_p2() {
         let input = "2x3x4\n1x1x10\n";
-        assert_eq!(p2(input).unwrap(), 48);
+        assert_eq!(p2(input), 48);
     }
 }
 
-pub fn p2(input: &str) -> anyhow::Result<usize> {
+pub fn p2(input: &str) -> usize {
     let total = input
         .lines()
         .map(|l| {
@@ -42,11 +42,15 @@ pub fn p2(input: &str) -> anyhow::Result<usize> {
             v + p
         })
         .sum::<usize>();
-    Ok(total)
+    total
 }
 
-pub fn solve() -> anyhow::Result<()> {
-    println!("p1: {}", p1(INPUT)?);
-    println!("p2: {}", p2(INPUT)?);
-    Ok(())
+fn main() {
+    let now = std::time::Instant::now();
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
+    let now = std::time::Instant::now();
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

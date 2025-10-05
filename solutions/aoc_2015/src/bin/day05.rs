@@ -2,7 +2,7 @@ use std::time::Instant;
 
 const INPUT: &'static str = include_str!("inputs/day05.txt");
 
-pub fn p1(input: &str) -> anyhow::Result<i32> {
+pub fn p1(input: &str) -> i32 {
     let mut p1 = 0;
     for line in input.lines().map(|l| l.chars().collect::<Vec<char>>()) {
         // Check for vowels
@@ -28,7 +28,7 @@ pub fn p1(input: &str) -> anyhow::Result<i32> {
             p1 += 1;
         }
     }
-    Ok(p1)
+    p1
 }
 
 #[cfg(test)]
@@ -38,17 +38,17 @@ mod tests {
     #[test]
     fn test_p1() {
         let tests = "ugknbfddgicrmopn\naaa\njchzalrnumimnmhp\nhaegwjzuvuyypxyu\ndvszwmarrgswjxmb\n";
-        assert_eq!(p1(tests).unwrap(), 2);
+        assert_eq!(p1(tests), 2);
     }
 
     #[test]
     fn test_p2() {
         let tests = "qjhvhtzxzqqjkmpb\nxxyxx\nuurcxstgmygtbstg\nieodomkazucvgmuy\n";
-        assert_eq!(p2(tests).unwrap(), 2);
+        assert_eq!(p2(tests), 2);
     }
 }
 
-pub fn p2(input: &str) -> anyhow::Result<i32> {
+pub fn p2(input: &str) -> i32 {
     let mut p2 = 0;
     for line in input.lines().map(|l| l.chars().collect::<Vec<char>>()) {
         // Look for any repeats
@@ -80,13 +80,15 @@ pub fn p2(input: &str) -> anyhow::Result<i32> {
         //     p2 += 1;
         // }
     }
-    Ok(p2)
+    p2
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

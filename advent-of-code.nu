@@ -1,3 +1,4 @@
+#     println!("🎄 Advent of Code {} - Day {} 🎄", args.year, args.day);
 # A helper to print messages in a consistent style
 def "print-info" [message: string] {
     print $"✅ ($message)"
@@ -8,9 +9,114 @@ def "print-error" [message: string] {
     print -e $"❌ ERROR: ($message)"
 }
 
+# Normalize and convert a debug-formatted Rust Duration string into a Nushell duration
+def "parse-duration" [value: string] {
+    $value
+    | str trim
+    | split row " "
+    | where {|part| not ($part | str trim | is-empty) }
+    | each {|part|
+        let normalized = (
+            if ($part | str ends-with "ms") {
+                $part
+            } else if ($part | str ends-with "µs") {
+                $part
+            } else if ($part | str ends-with "us") {
+                $part | str replace --regex "us$" "µs"
+            } else if ($part | str ends-with "ns") {
+                $part
+            } else if ($part | str ends-with "s") {
+                $part | str replace --regex "s$" "sec"
+            } else if ($part | str ends-with "m") {
+                $part | str replace --regex "m$" "min"
+            } else if ($part | str ends-with "h") {
+                $part | str replace --regex "h$" "hr"
+            } else if ($part | str ends-with "d") {
+                $part | str replace --regex "d$" "day"
+            } else if ($part | str ends-with "w") {
+                $part | str replace --regex "w$" "wk"
+            } else {
+                $part
+            }
+        )
+
+        try { $normalized | into duration } catch { 0ns }
+    }
+    | math sum
+}
+
+# run all days for a given year
+export def "aoc all" [year: int] {
+    let crate_name = $"aoc_($year)"
+    let bin_path = $"solutions/($crate_name)/src/bin"
+
+    let results = (
+        1..25
+        | each {|day|
+            let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
+            let day_file = $"($bin_path)/($day_mod).rs"
+
+            if not ($day_file | path exists) {
+                []
+            } else {
+                let run = (cargo run --release -q -p $crate_name --bin $day_mod | complete)
+
+                if $run.exit_code != 0 {
+                    print-error $"Day ($day_mod) failed with exit code ($run.exit_code)"
+                    let stderr = ($run.stderr | default "" | str trim)
+                    if not ($stderr | is-empty) {
+                        print $stderr
+                    }
+                    []
+                } else {
+                    $run.stdout
+                    | str trim
+                    | lines
+                    | parse "{part} {time} {solution}"
+                    | insert day $day
+                    | insert year $year
+                }
+            }
+        }
+        | flatten
+    )
+
+    if ($results | is-empty) {
+        print-info "No puzzle output detected."
+    } else {
+        print $"🎄 Advent of Code ($year) Summary 🎄"
+        let table = (
+            $results
+            | select year day part time solution
+            | sort-by year day part
+        )
+
+        let total_duration = (
+            $results
+            | each {|row| parse-duration ($row.time | default "0ns") }
+            | math sum
+        )
+
+        print $"total time: ($total_duration)"
+        $table
+        | table
+    }
+}
+
 # Advent of Code runner
 export def "aoc" [year: int, day: int] {
-    cargo run --release -q -- -y $year -d $day
+    let crate_name = $"aoc_($year)"
+    let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
+    print $"🎄 Advent of Code ($year) - Day ($day) 🎄"
+    cargo run --release -q -p $crate_name --bin $day_mod
+}
+
+export def "aoc test" [year: int, day: int] {
+    let crate_name = $"aoc_($year)"
+    let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
+    
+    print $"🎄 Test Advent of Code ($year) - Day ($day) 🎄"
+    cargo test -p $crate_name --bin $day_mod
 }
 
 export def "aoc watch" [
@@ -31,13 +137,6 @@ export def "aoc watch" [
             print "🔄 Watching for changes..."
         }
     }
-}
-
-export def "aoc test" [year: int, day: int] {
-    let crate_name = $"aoc_($year)"
-    let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
-    
-    cargo test --quiet -p $crate_name $day_mod
 }
 
 ###*
@@ -90,37 +189,9 @@ anyhow = { workspace = true }
     $new_cargo_toml | save --force $"($crate_path)/Cargo.toml"
     print-info $"Configured '($crate_path)/Cargo.toml'"
 
-    # --- 4. Add boilerplate to the new crate's lib.rs and create inputs folder ---
-let new_lib_rs = ' 
-pub fn run(day: u8) -> anyhow::Result<()> {
-    match day {
-        _ => println!("Day {{day}} not yet implemented for ''' + $year_str + '''."),
-    }
-    Ok(())
-}
-'
-
-    $new_lib_rs | save --force $"($crate_path)/src/lib.rs"
+    rm $"($crate_path)/src/lib.rs"
     mkdir $"($crate_path)/src/inputs"
-    print-info $"Added boilerplate to '($crate_path)/src/lib.rs' and created inputs directory"
-
-    # --- 5. Update the runner's Cargo.toml ---
-    let runner_toml_path = "runner/Cargo.toml"
-    let dep_line = $"($crate_name) = \{ path = \"../($crate_path)\" }"
-    let runner_toml_content = open --raw $runner_toml_path
-    let updated_runner_toml = $runner_toml_content | str replace "[dependencies]" $"[dependencies]\n($dep_line)"
-    $updated_runner_toml | save --force $runner_toml_path
-    print-info $"Updated '($runner_toml_path)' with new dependency"
-
-    # --- 6. Update the runner's main.rs ---
-    let runner_main_path = "runner/src/main.rs"
-    let match_arm_line = "        " + $year_str + " => " + $crate_name + "::run(args.day)?,"
-    # We target the line with the catch-all arm to insert our new line before it.
-    let insertion_target = "        _ => println!"
-    let runner_main_content = open $runner_main_path
-    let updated_runner_main = $runner_main_content | str replace $insertion_target $"($match_arm_line)\n($insertion_target)"
-    $updated_runner_main | save --force $runner_main_path
-    print-info $"Updated '($runner_main_path)' with new match arm"
+    print-info $"Created inputs directory"
 
     print $"\n🎉 Successfully set up year ($year)! You can now add daily solutions."
 }
@@ -135,7 +206,7 @@ export def "new-day" [
     let day_str = $"($day)"
     let crate_name = $"aoc_($year_str)"
     let crate_path = $"solutions/($crate_name)"
-    let src_path = $"($crate_path)/src"
+    let src_path = $"($crate_path)/src/bin"
     let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
     let day_file = $"($src_path)/($day_mod).rs"
 
@@ -163,32 +234,18 @@ pub fn p2(input: &str) -> i32 {
 }
 
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT), now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT), now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }
 '
     $day_boiler | save --force $day_file
     print-info $"Created boilerplate for ($day_mod) at '($day_file)'"
-
-    # --- 3. Update the year lib.rs to include the new module and match arm ---
-    let lib_path = $"($src_path)/lib.rs"
-    let lib_content = open --raw $lib_path
-    # Add mod if not present (always add at the top)
-    let mod_decl = $"pub mod ($day_mod);"
-    let new_lib_content = if ($lib_content | str contains $mod_decl) {
-        $lib_content
-    } else {
-        $mod_decl + "\n" + $lib_content
-    }
-    # Add match arm after 'match day {'
-    let match_arm = $"        ($day) => ($day_mod)::solve" + "()?,"
-    let new_lib_content = $new_lib_content | str replace "match day {" ("match day {\n" + $match_arm)
-    $new_lib_content | save --force $lib_path
-    print-info $"Updated '($lib_path)' to include ($day_mod) and match arm"
 }
 
 ###*
@@ -223,7 +280,7 @@ export def "get-input" [
 
     # Format day with a leading zero for consistent filenames (e.g., 1 -> 01)
     let day_str_padded = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
-    let output_path = $"($crate_path)/src/inputs/($day_str_padded).txt"
+    let output_path = $"($crate_path)/src/bin/inputs/($day_str_padded).txt"
 
     if ($output_path | path exists) {
         print-info $"Input for ($year)-($day_str_padded) already exists at '($output_path)'. Skipping."
@@ -273,7 +330,7 @@ export def "upload-gist" [
 ] {
     let year_str = $"($year)"
     let day_str = (if $day < 10 { ("day0" ++ ($day | into string)) } else { ("day" ++ ($day | into string)) })
-    let file_path = ("solutions/aoc_" ++ $year_str ++ "/src/" ++ $day_str ++ ".rs")
+    let file_path = ("solutions/aoc_" ++ $year_str ++ "/src/bin/" ++ $day_str ++ ".rs")
 
     if not ($file_path | path exists) {
         print-error ("Solution file not found: " ++ $file_path)

@@ -28,7 +28,7 @@ impl Point {
     }
 }
 
-pub fn p1(input: &str) -> anyhow::Result<usize> {
+pub fn p1(input: &str) -> usize {
     let mut cur = Point::new(0, 0);
 
     let mut seen = HashSet::new();
@@ -39,10 +39,10 @@ pub fn p1(input: &str) -> anyhow::Result<usize> {
         seen.insert(cur);
     }
 
-    Ok(seen.len())
+    seen.len()
 }
 
-pub fn p2(input: &str) -> anyhow::Result<usize> {
+pub fn p2(input: &str) -> usize {
     let mut cur_santa = Point::new(0, 0);
     let mut cur_robo_santa = Point::new(0, 0);
 
@@ -61,11 +61,15 @@ pub fn p2(input: &str) -> anyhow::Result<usize> {
         santas_turn = !santas_turn;
     }
 
-    Ok(seen.len())
+    seen.len()
 }
 
-pub fn solve() -> anyhow::Result<()> {
-    println!("p1: {}", p1(INPUT)?);
-    println!("p2: {}", p2(INPUT)?);
-    Ok(())
+fn main() {
+    let now = std::time::Instant::now();
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
+    let now = std::time::Instant::now();
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

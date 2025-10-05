@@ -31,11 +31,13 @@ use std::time::Instant;
 
 use serde_json::Value;
 
-pub fn solve() -> anyhow::Result<()> {
-    let input: Value = serde_json::from_str(INPUT)?;
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(&input), now.elapsed());
+    let input: Value = serde_json::from_str(INPUT).unwrap();
+    let solution = p1(&input);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(&input), now.elapsed());
-    Ok(())
+    let solution = p2(&input);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

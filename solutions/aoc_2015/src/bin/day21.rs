@@ -21,11 +21,14 @@ impl Player {
     }
 
     fn new_with_items(health: i32, items: &[&Item]) -> (Self, i32) {
-        (Self {
-            health, 
-            damage: items.iter().map(|i| i.damage).sum(),
-            armor: items.iter().map(|i| i.armor).sum(),
-        }, items.iter().map(|i| i.cost).sum())
+        (
+            Self {
+                health,
+                damage: items.iter().map(|i| i.damage).sum(),
+                armor: items.iter().map(|i| i.armor).sum(),
+            },
+            items.iter().map(|i| i.cost).sum(),
+        )
     }
 
     fn new(health: i32, damage: i32, armor: i32) -> Self {
@@ -230,10 +233,12 @@ pub fn p2(input: &str) -> i32 {
     max
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT), now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT), now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

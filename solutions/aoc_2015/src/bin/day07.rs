@@ -91,14 +91,14 @@ impl<'a> Instruction<'a> {
     }
 }
 
-pub fn p1(input: &str) -> anyhow::Result<u16> {
+pub fn p1(input: &str) -> u16 {
     let instructions = input
         .lines()
         .map(|l| Instruction::parse(l).unwrap().1)
         .map(|(l, r)| (r, l))
         .collect::<HashMap<&str, Instruction>>();
     let mut memo: HashMap<&str, u16> = HashMap::new();
-    Ok(solve_circuit(&instructions, &mut memo, &"a"))
+    solve_circuit(&instructions, &mut memo, &"a")
 }
 
 fn solve_circuit<'a>(
@@ -132,7 +132,7 @@ fn solve_circuit<'a>(
     result
 }
 
-pub fn p2(input: &str, b: u16) -> anyhow::Result<u16> {
+pub fn p2(input: &str, b: u16) -> u16 {
     let instructions = input
         .lines()
         .map(|l| Instruction::parse(l).unwrap().1)
@@ -142,14 +142,15 @@ pub fn p2(input: &str, b: u16) -> anyhow::Result<u16> {
     let mut memo: HashMap<&str, u16> = HashMap::new();
     memo.insert("b", b);
     let b = solve_circuit(&instructions, &mut memo, &"a");
-    Ok(b)
+    b
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    let p1_solution = p1(INPUT)?;
-    println!("p1: {} ({:?})", p1_solution, now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT, p1_solution)?, now.elapsed());
-    Ok(())
+    let solution = p2(INPUT, solution);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

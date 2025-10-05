@@ -14,28 +14,28 @@ fn parse(input: &str) -> (HashMap<(&str, &str), usize>, Vec<&str>) {
     (distances, cities)
 }
 
-pub fn p1(input: &str) -> anyhow::Result<usize> {
+pub fn p1(input: &str) -> usize {
     let (distances, cities) = parse(input);
-    Ok(Permutation::new(cities.len())
+    Permutation::new(cities.len())
         .map(|p| {
             p.windows(2)
                 .map(|w| distances.get(&(cities[w[0]], cities[w[1]])).unwrap())
                 .sum()
         })
         .min()
-        .unwrap())
+        .unwrap()
 }
 
-pub fn p2(input: &str) -> anyhow::Result<usize> {
+pub fn p2(input: &str) -> usize {
     let (distances, cities) = parse(input);
-    Ok(Permutation::new(cities.len())
+    Permutation::new(cities.len())
         .map(|p| {
             p.windows(2)
                 .map(|w| distances.get(&(cities[w[0]], cities[w[1]])).unwrap())
                 .sum()
         })
         .max()
-        .unwrap())
+        .unwrap()
 }
 
 use std::{
@@ -45,10 +45,12 @@ use std::{
 
 use dinglebit_combinatorics::Permutation;
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

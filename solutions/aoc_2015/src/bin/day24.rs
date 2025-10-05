@@ -11,9 +11,6 @@ pub fn p1(input: &str) -> usize {
         .collect::<Vec<usize>>();
     let total = packages.iter().sum::<usize>();
     let group = total / 3;
-    println!("total: {:?}", total);
-    println!("group_total: {:?}", group);
-    println!("weights: ({}) {:?}", packages.len(), packages);
 
     for i in 5..=packages.len() / 3 {
         let solution = Combination::new(packages.len(), i)
@@ -93,12 +90,16 @@ pub fn p1_helper(packages: &[usize], req: usize, index: usize, qe: usize, weight
     }
 }
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1_rec: {} ({:?})", p1_rec(INPUT), now.elapsed());
+    let solution = p1_rec(INPUT);
+    println!("p1_rec {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT), now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT), now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

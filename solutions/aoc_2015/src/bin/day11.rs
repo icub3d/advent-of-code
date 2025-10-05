@@ -61,21 +61,22 @@ fn find_next_valid_password(password: &str) -> String {
     cur.iter().map(|i| *i as char).collect()
 }
 
-pub fn p1(input: &str) -> anyhow::Result<String> {
-    Ok(find_next_valid_password(input.trim()))
+pub fn p1(input: &str) -> String {
+    find_next_valid_password(input.trim())
 }
 
-pub fn p2(input: &str) -> anyhow::Result<String> {
-    Ok(find_next_valid_password(input.trim()))
+pub fn p2(input: &str) -> String {
+    find_next_valid_password(input.trim())
 }
 
 use std::{collections::HashSet, time::Instant};
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    let password = p1(INPUT)?;
-    println!("p1: {} ({:?})", password, now.elapsed());
+    let password = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), password);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(&password)?, now.elapsed());
-    Ok(())
+    let solution = p2(&password);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }

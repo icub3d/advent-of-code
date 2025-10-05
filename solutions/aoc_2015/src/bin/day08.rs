@@ -1,8 +1,8 @@
 const INPUT: &'static str = include_str!("inputs/day08.txt");
 
-pub fn p1(input: &str) -> anyhow::Result<usize> {
+pub fn p1(input: &str) -> usize {
     let lines = input.lines().collect::<Vec<&str>>();
-    Ok(lines.iter().map(|l| l.len() - in_memory_size(l)).sum())
+    lines.iter().map(|l| l.len() - in_memory_size(l)).sum()
 }
 
 fn in_memory_size(s: &str) -> usize {
@@ -40,9 +40,9 @@ mod tests {
     }
 }
 
-pub fn p2(input: &str) -> anyhow::Result<usize> {
+pub fn p2(input: &str) -> usize {
     let lines = input.lines().collect::<Vec<&str>>();
-    Ok(lines.iter().map(|l| encoded_size(l) - l.len()).sum())
+    lines.iter().map(|l| encoded_size(l) - l.len()).sum()
 }
 
 fn encoded_size(s: &str) -> usize {
@@ -57,10 +57,12 @@ fn encoded_size(s: &str) -> usize {
 
 use std::time::Instant;
 
-pub fn solve() -> anyhow::Result<()> {
+fn main() {
     let now = Instant::now();
-    println!("p1: {} ({:?})", p1(INPUT)?, now.elapsed());
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
-    println!("p2: {} ({:?})", p2(INPUT)?, now.elapsed());
-    Ok(())
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }
