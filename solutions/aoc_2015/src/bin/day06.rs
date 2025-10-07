@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day06.txt");
+const INPUT: &str = include_str!("inputs/day06.txt");
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 struct Point {
@@ -61,7 +61,7 @@ impl Instruction {
     }
 }
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> usize {
     let instructions = input
         .lines()
         .map(Instruction::parse)
@@ -69,12 +69,16 @@ pub fn p1(input: &str) -> usize {
 
     let mut grid = vec![vec![false; 1000]; 1000];
     for instruction in instructions {
-        for y in instruction.start.y..=instruction.end.y {
-            for x in instruction.start.x..=instruction.end.x {
+        for row in grid
+            .iter_mut()
+            .take(instruction.end.y + 1)
+            .skip(instruction.start.y)
+        {
+            for cell in row[instruction.start.x..=instruction.end.x].iter_mut() {
                 match instruction.instruction_type {
-                    InstructionType::TurnOff => grid[y][x] = false,
-                    InstructionType::TurnOn => grid[y][x] = true,
-                    InstructionType::Toggle => grid[y][x] = !grid[y][x],
+                    InstructionType::TurnOff => *cell = false,
+                    InstructionType::TurnOn => *cell = true,
+                    InstructionType::Toggle => *cell = !*cell,
                 }
             }
         }
@@ -82,20 +86,24 @@ pub fn p1(input: &str) -> usize {
     grid.into_iter().flatten().filter(|x| *x).count()
 }
 
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let instructions = input
         .lines()
         .map(Instruction::parse)
         .collect::<Vec<Instruction>>();
 
-    let mut grid = vec![vec![0 as usize; 1000]; 1000];
+    let mut grid = vec![vec![0_usize; 1000]; 1000];
     for instruction in instructions {
-        for y in instruction.start.y..=instruction.end.y {
-            for x in instruction.start.x..=instruction.end.x {
+        for row in grid
+            .iter_mut()
+            .take(instruction.end.y + 1)
+            .skip(instruction.start.y)
+        {
+            for cell in &mut row[instruction.start.x..=instruction.end.x] {
                 match instruction.instruction_type {
-                    InstructionType::TurnOff => grid[y][x] = grid[y][x].saturating_sub(1),
-                    InstructionType::TurnOn => grid[y][x] += 1,
-                    InstructionType::Toggle => grid[y][x] += 2,
+                    InstructionType::TurnOff => *cell = cell.saturating_sub(1),
+                    InstructionType::TurnOn => *cell += 1,
+                    InstructionType::Toggle => *cell += 2,
                 }
             }
         }

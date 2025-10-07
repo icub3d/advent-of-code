@@ -1,34 +1,55 @@
 use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day05.txt");
+const INPUT: &str = include_str!("inputs/day05.txt");
 
-pub fn p1(input: &str) -> i32 {
-    let mut p1 = 0;
-    for line in input.lines().map(|l| l.chars().collect::<Vec<char>>()) {
-        // Check for vowels
-        let vowels = line
-            .clone()
-            .into_iter()
-            .filter(|c| "aeiou".contains(*c))
-            .count();
-        if vowels < 3 {
-            continue;
-        }
+fn p1_rules(line: &str) -> bool {
+    let mut chars = line.chars();
+    let first = chars.next().unwrap();
+    let vowels = if "aeiou".contains(first) { 1 } else { 0 };
+    let (vowels, has_double, has_bad, _) = chars.fold(
+        (vowels, false, false, first),
+        |(vowels, has_double, has_bad, prev), c| {
+            (
+                vowels + if "aeiou".contains(c) { 1 } else { 0 },
+                has_double || prev == c,
+                has_bad || matches!((prev, c), ('a', 'b') | ('c', 'd') | ('p', 'q') | ('x', 'y')),
+                c,
+            )
+        },
+    );
+    vowels >= 3 && has_double && !has_bad
+}
 
-        // Check for bad pairs
-        let bad = [['a', 'b'], ['c', 'd'], ['p', 'q'], ['x', 'y']];
-        let found = line.windows(2).any(|w| bad.contains(&[w[0], w[1]]));
-        if found {
-            continue;
-        }
+fn p1(input: &str) -> usize {
+    input.lines().filter(|line| p1_rules(line)).count()
+}
 
-        // Check for two of same adjacent
-        let found = line.windows(2).any(|w| w[0] == w[1]);
-        if found {
-            p1 += 1;
-        }
-    }
-    p1
+fn p2_rules(line: &str) -> bool {
+    // We can track seen pairs by checking the last two first and then inserting the second pair. Note, Vec is faster than HashSet here, even using FxHashSet.
+    let mut seen = Vec::new();
+    line.as_bytes()
+        .windows(3)
+        .scan((false, false), |(has_pair, has_repeat), w| {
+            *has_repeat |= w[0] == w[2];
+            *has_pair |= seen.contains(&[w[1], w[2]]);
+            seen.push([w[0], w[1]]);
+            Some((*has_pair, *has_repeat))
+        })
+        .any(|(has_pair, has_repeat)| has_pair && has_repeat)
+}
+
+fn p2(input: &str) -> usize {
+    input.lines().filter(|line| p2_rules(line)).count()
+}
+
+fn main() {
+    let now = Instant::now();
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+
+    let now = Instant::now();
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }
 
 #[cfg(test)]
@@ -46,49 +67,4 @@ mod tests {
         let tests = "qjhvhtzxzqqjkmpb\nxxyxx\nuurcxstgmygtbstg\nieodomkazucvgmuy\n";
         assert_eq!(p2(tests), 2);
     }
-}
-
-pub fn p2(input: &str) -> i32 {
-    let mut p2 = 0;
-    for line in input.lines().map(|l| l.chars().collect::<Vec<char>>()) {
-        // Look for any repeats
-        let repeat = line.windows(3).any(|w| w[0] == w[2]);
-        if !repeat {
-            continue;
-        }
-
-        let windows = line.windows(2).collect::<Vec<&[char]>>();
-        for (i, window) in windows.iter().enumerate() {
-            if i < windows.len() - 2 && windows[i + 2..].contains(window) {
-                p2 += 1;
-                break;
-            }
-        }
-
-        // let mut double = false;
-        // 'outer: for i in 0..line.len() - 3 {
-        //     let search = (line[i], line[i + 1]);
-        //     for j in i + 2..line.len() - 1 {
-        //         if search == (line[j], line[j + 1]) {
-        //             double = true;
-        //             break 'outer;
-        //         }
-        //     }
-        // }
-
-        // if double {
-        //     p2 += 1;
-        // }
-    }
-    p2
-}
-
-fn main() {
-    let now = Instant::now();
-    let solution = p1(INPUT);
-    println!("p1 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p2(INPUT);
-    println!("p2 {:?} {}", now.elapsed(), solution);
 }

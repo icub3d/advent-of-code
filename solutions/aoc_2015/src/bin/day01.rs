@@ -1,32 +1,42 @@
-const INPUT: &'static str = include_str!("inputs/day01.txt");
+const INPUT: &str = include_str!("inputs/day01.txt");
 
-pub fn p1(input: &str) -> i32 {
-    let floor = input
+// Convert each character to a floor change and then sum them up.
+fn p1(input: &str) -> isize {
+    input
         .chars()
         .map(|c| match c {
             '(' => 1,
             ')' => -1,
             _ => 0,
         })
-        .sum::<i32>();
-    floor
+        .sum()
 }
 
-pub fn p2(input: &str) -> i32 {
-    let mut floor = 0;
-    let mut first_negative = 0;
-    for (i, c) in input.chars().enumerate() {
-        floor += match c {
+// Use scan to keep track of the current floor and find the first position where it goes below 0.
+fn p2(input: &str) -> usize {
+    input
+        .chars()
+        .map(|c| match c {
             '(' => 1,
             ')' => -1,
             _ => 0,
-        };
-        if floor < 0 {
-            first_negative = i as i32 + 1;
-            break;
-        }
-    }
-    first_negative
+        })
+        .scan(0, |floor, change| {
+            *floor += change;
+            Some(*floor)
+        })
+        .position(|floor| floor < 0)
+        .map(|pos| pos + 1)
+        .unwrap()
+}
+
+pub fn main() {
+    let now = std::time::Instant::now();
+    let solution = p1(INPUT);
+    println!("p1 {:?} {}", now.elapsed(), solution);
+    let now = std::time::Instant::now();
+    let solution = p2(INPUT);
+    println!("p2 {:?} {}", now.elapsed(), solution);
 }
 
 #[cfg(test)]
@@ -37,13 +47,4 @@ mod tests {
     fn test_p2() {
         assert_eq!(p2("()())"), 5);
     }
-}
-
-pub fn main() {
-    let now = std::time::Instant::now();
-    let solution = p1(INPUT);
-    println!("p1 {:?} {}", now.elapsed(), solution);
-    let now = std::time::Instant::now();
-    let solution = p2(INPUT);
-    println!("p2 {:?} {}", now.elapsed(), solution);
 }

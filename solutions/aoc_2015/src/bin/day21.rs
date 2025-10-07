@@ -1,4 +1,4 @@
-use std::{i32, time::Instant};
+use std::time::Instant;
 
 #[derive(Debug)]
 struct Player {
@@ -20,17 +20,6 @@ impl Player {
         Self::new(lines[0], lines[1], lines[2])
     }
 
-    fn new_with_items(health: i32, items: &[&Item]) -> (Self, i32) {
-        (
-            Self {
-                health,
-                damage: items.iter().map(|i| i.damage).sum(),
-                armor: items.iter().map(|i| i.armor).sum(),
-            },
-            items.iter().map(|i| i.cost).sum(),
-        )
-    }
-
     fn new(health: i32, damage: i32, armor: i32) -> Self {
         Self {
             health,
@@ -40,30 +29,30 @@ impl Player {
     }
 
     fn beats(&self, boss: &Player) -> bool {
-        let boss_kills_me =
-            (100 as f32 / (boss.damage as f32 - self.armor as f32).max(1 as f32)).ceil() as i32;
-        let me_kills_boss = (boss.health as f32
-            / (self.damage as f32 - boss.armor as f32).max(1 as f32))
-        .ceil() as i32;
+        self.turns_to_kill(boss) <= boss.turns_to_kill(self)
+    }
 
-        me_kills_boss <= boss_kills_me
+    // Number of turns `self` needs to kill `target`, using integer ceiling.
+    fn turns_to_kill(&self, target: &Player) -> i32 {
+        let dmg_per_turn = (self.damage - target.armor).max(1);
+        (target.health + dmg_per_turn - 1) / dmg_per_turn
     }
 }
 
-const WEAPONS: &'static str = "8 4 0
+const WEAPONS: &str = "8 4 0
 10 5 0
 25 6 0
 40 7 0
 74 8 0";
 
-const ARMOR: &'static str = "0 0 0
+const ARMOR: &str = "0 0 0
 13 0 1
 31 0 2
 53 0 3
 75 0 4
 102 0 5";
 
-const RINGS: &'static str = "0 0 0
+const RINGS: &str = "0 0 0
 25 1 0
 50 2 0
 100 3 0
@@ -185,52 +174,32 @@ impl Iterator for ItemCombinations {
     }
 }
 
-const INPUT: &'static str = include_str!("inputs/day21.txt");
+const INPUT: &str = include_str!("inputs/day21.txt");
 
-pub fn p1(input: &str) -> i32 {
+fn p1(input: &str) -> i32 {
     let boss = Player::parse(input);
-
-    let weapons = Item::parse_all(WEAPONS);
-    let armors = Item::parse_all(ARMOR);
-    let rings = Item::parse_all(RINGS);
-
-    let mut min = i32::MAX;
-    for weapon in &weapons {
-        for armor in &armors {
-            for ring1 in &rings {
-                for ring2 in &rings {
-                    if ring1 == ring2 && *ring1 != rings[0] {
-                        continue;
-                    }
-
-                    let (p, cost) = Player::new_with_items(100, &vec![weapon, armor, ring1, ring2]);
-
-                    if p.beats(&boss) {
-                        min = min.min(cost)
-                    }
-                }
-            }
-        }
-    }
-
-    min
+    ItemCombinations::new()
+        .map(|(damage, armor, cost)| {
+            let attacker = Player::new(100, damage, armor);
+            (attacker, cost)
+        })
+        .filter(|(attacker, _)| attacker.beats(&boss))
+        .map(|(_, cost)| cost)
+        .min()
+        .unwrap()
 }
 
-pub fn p2(input: &str) -> i32 {
+fn p2(input: &str) -> i32 {
     let boss = Player::parse(input);
-    let mut max = i32::MIN;
-    for (damage, armor, cost) in ItemCombinations::new() {
-        let boss_kills_me =
-            (100 as f32 / (boss.damage as f32 - armor as f32).max(1 as f32)).ceil() as i32;
-        let me_kills_boss =
-            (boss.health as f32 / (damage as f32 - boss.armor as f32).max(1 as f32)).ceil() as i32;
-
-        if me_kills_boss > boss_kills_me {
-            max = max.max(cost);
-        }
-    }
-
-    max
+    ItemCombinations::new()
+        .map(|(damage, armor, cost)| {
+            let attacker = Player::new(100, damage, armor);
+            (attacker, cost)
+        })
+        .filter(|(attacker, _)| boss.beats(attacker))
+        .map(|(_, cost)| cost)
+        .max()
+        .unwrap()
 }
 
 fn main() {

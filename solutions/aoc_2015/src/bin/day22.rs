@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day22.txt");
+const INPUT: &str = include_str!("inputs/day22.txt");
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 struct State {
@@ -12,6 +12,17 @@ struct State {
     poison: usize,
     recharge: usize,
 }
+
+// Spell constants to avoid magic numbers and to clarify intent.
+const COST_MISSILE: i32 = 53;
+const COST_DRAIN: i32 = 73;
+const COST_SHIELD: i32 = 113;
+const COST_POISON: i32 = 173;
+const COST_RECHARGE: i32 = 229;
+
+const DURATION_SHIELD: usize = 6;
+const DURATION_POISON: usize = 6;
+const DURATION_RECHARGE: usize = 5;
 
 impl State {
     fn new(input: &str) -> Self {
@@ -43,7 +54,7 @@ impl State {
         }
     }
 
-    fn neighbors(&self, hard: bool) -> Vec<(Self, usize)> {
+    fn neighbors(&self, hard: bool) -> Vec<(Self, i32)> {
         let mut neighbors = Vec::new();
 
         // Apply effects and check for my own death.
@@ -61,37 +72,37 @@ impl State {
             return vec![(next, 0)];
         }
 
-        // At this point, we cast a spell.
-        if next.poison == 0 && next.mana >= 173 {
+        // At this point, we cast a spell. Check availability and costs.
+        if next.poison == 0 && next.mana >= COST_POISON {
             let mut spell = next.clone();
-            spell.mana -= 173;
-            spell.poison = 6;
-            neighbors.push((spell, 173));
+            spell.mana -= COST_POISON;
+            spell.poison = DURATION_POISON;
+            neighbors.push((spell, COST_POISON));
         }
-        if next.recharge == 0 && next.mana >= 229 {
+        if next.recharge == 0 && next.mana >= COST_RECHARGE {
             let mut spell = next.clone();
-            spell.mana -= 229;
-            spell.recharge = 5;
-            neighbors.push((spell, 229));
+            spell.mana -= COST_RECHARGE;
+            spell.recharge = DURATION_RECHARGE;
+            neighbors.push((spell, COST_RECHARGE));
         }
-        if next.shield == 0 && next.mana >= 113 {
+        if next.shield == 0 && next.mana >= COST_SHIELD {
             let mut spell = next.clone();
-            spell.mana -= 113;
-            spell.shield = 6;
-            neighbors.push((spell, 113));
+            spell.mana -= COST_SHIELD;
+            spell.shield = DURATION_SHIELD;
+            neighbors.push((spell, COST_SHIELD));
         }
-        if next.mana >= 53 {
+        if next.mana >= COST_MISSILE {
             let mut spell = next.clone();
-            spell.mana -= 53;
+            spell.mana -= COST_MISSILE;
             spell.boss_health -= 4;
-            neighbors.push((spell, 53));
+            neighbors.push((spell, COST_MISSILE));
         }
-        if next.mana >= 73 {
+        if next.mana >= COST_DRAIN {
             let mut spell = next.clone();
-            spell.mana -= 73;
+            spell.mana -= COST_DRAIN;
             spell.boss_health -= 2;
             spell.health += 2;
-            neighbors.push((spell, 73));
+            neighbors.push((spell, COST_DRAIN));
         }
 
         // Apply effects and then boss damage if boss isn't dead.
@@ -110,7 +121,7 @@ impl State {
     }
 }
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> i32 {
     let start = State::new(input);
 
     let (_, cost) = pathfinding::directed::dijkstra::dijkstra(
@@ -122,7 +133,7 @@ pub fn p1(input: &str) -> usize {
     cost
 }
 
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> i32 {
     let start = State::new(input);
 
     let (_, cost) = pathfinding::directed::dijkstra::dijkstra(

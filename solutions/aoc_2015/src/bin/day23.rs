@@ -1,8 +1,11 @@
-use std::time::Instant;
+use std::{
+    ops::{Index, IndexMut},
+    time::Instant,
+};
 
-const INPUT: &'static str = include_str!("inputs/day23.txt");
+const INPUT: &str = include_str!("inputs/day23.txt");
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Register {
     A,
     B,
@@ -16,44 +19,9 @@ impl Register {
             _ => panic!("unknown register: {}", input),
         }
     }
-
-    fn one(&self, a: usize, b: usize) -> bool {
-        match self {
-            Register::A => a == 1,
-            Register::B => b == 1,
-        }
-    }
-
-    fn even(&self, a: usize, b: usize) -> bool {
-        match self {
-            Register::A => a % 2 == 0,
-            Register::B => b % 2 == 0,
-        }
-    }
-
-    fn increment(&self, a: &mut usize, b: &mut usize) {
-        match self {
-            Register::A => *a += 1,
-            Register::B => *b += 1,
-        }
-    }
-
-    fn half(&self, a: &mut usize, b: &mut usize) {
-        match self {
-            Register::A => *a /= 2,
-            Register::B => *b /= 2,
-        }
-    }
-
-    fn triple(&self, a: &mut usize, b: &mut usize) {
-        match self {
-            Register::A => *a *= 3,
-            Register::B => *b *= 3,
-        }
-    }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum Instruction {
     Hlf(Register),
     Tpl(Register),
@@ -82,59 +50,97 @@ impl Instruction {
             _ => panic!("unknown instruction: {}", input),
         }
     }
+}
 
-    fn evaluate(&self, pc: &mut isize, a: &mut usize, b: &mut usize) {
-        match self {
+struct Machine {
+    a: usize,
+    b: usize,
+    pc: isize,
+    instructions: Vec<Instruction>,
+}
+
+impl Index<Register> for Machine {
+    type Output = usize;
+
+    fn index(&self, index: Register) -> &Self::Output {
+        match index {
+            Register::A => &self.a,
+            Register::B => &self.b,
+        }
+    }
+}
+
+impl IndexMut<Register> for Machine {
+    fn index_mut(&mut self, index: Register) -> &mut Self::Output {
+        match index {
+            Register::A => &mut self.a,
+            Register::B => &mut self.b,
+        }
+    }
+}
+
+impl Machine {
+    fn new(input: &str, a: usize) -> Self {
+        let instructions = input.lines().map(Instruction::parse).collect::<Vec<_>>();
+        Self {
+            a,
+            b: 0,
+            pc: 0,
+            instructions,
+        }
+    }
+
+    fn run(&mut self) {
+        while self.pc >= 0 && self.pc < self.instructions.len() as isize {
+            self.evaluate()
+        }
+    }
+
+    // Evaluate the instruction and update the machine state.
+    fn evaluate(&mut self) {
+        let instruction = self.instructions[self.pc as usize];
+        match instruction {
             Instruction::Hlf(r) => {
-                r.half(a, b);
-                *pc += 1;
+                self[r] /= 2;
+                self.pc += 1;
             }
             Instruction::Tpl(r) => {
-                r.triple(a, b);
-                *pc += 1;
+                self[r] *= 3;
+                self.pc += 1;
             }
             Instruction::Inc(r) => {
-                r.increment(a, b);
-                *pc += 1;
+                self[r] += 1;
+                self.pc += 1;
             }
-            Instruction::Jmp(o) => *pc += o,
+            Instruction::Jmp(o) => self.pc += o,
             Instruction::Jie(r, o) => {
-                if r.even(*a, *b) {
-                    *pc += o;
+                if self[r].is_multiple_of(2) {
+                    self.pc += o;
                 } else {
-                    *pc += 1;
+                    self.pc += 1;
                 }
             }
             Instruction::Jio(r, o) => {
-                if r.one(*a, *b) {
-                    *pc += o;
+                if self[r] == 1 {
+                    self.pc += o;
                 } else {
-                    *pc += 1;
+                    self.pc += 1;
                 }
             }
         }
     }
 }
 
-pub fn p1(input: &str) -> usize {
-    run(input, 0)
+fn p1(input: &str) -> usize {
+    let mut machine = Machine::new(input, 0);
+    machine.run();
+    machine.b
 }
 
-pub fn p2(input: &str) -> usize {
-    run(input, 1)
-}
-
-pub fn run(input: &str, a: usize) -> usize {
-    let instructions = input.lines().map(Instruction::parse).collect::<Vec<_>>();
-    let mut pc = 0 as isize;
-    let mut a = a;
-    let mut b = 0;
-
-    while pc >= 0 && pc < instructions.len() as isize {
-        instructions[pc as usize].evaluate(&mut pc, &mut a, &mut b);
-    }
-
-    b
+fn p2(input: &str) -> usize {
+    let mut machine = Machine::new(input, 1);
+    machine.run();
+    machine.b
 }
 
 fn main() {

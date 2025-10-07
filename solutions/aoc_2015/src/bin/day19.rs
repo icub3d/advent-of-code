@@ -1,8 +1,8 @@
 use std::{collections::HashSet, time::Instant};
 
-const INPUT: &'static str = include_str!("inputs/day19.txt");
+const INPUT: &str = include_str!("inputs/day19.txt");
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> usize {
     let (replacements, molecule) = input.split_once("\n\n").unwrap();
     let replacements = replacements
         .lines()
@@ -21,7 +21,7 @@ pub fn p1(input: &str) -> usize {
     new_molecules.len()
 }
 
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let (_, molecule) = input.split_once("\n\n").unwrap();
 
     let molecule_count = molecule.chars().filter(|c| c.is_ascii_uppercase()).count();

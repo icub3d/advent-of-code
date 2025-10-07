@@ -1,6 +1,6 @@
-const INPUT: &'static str = include_str!("inputs/day08.txt");
+const INPUT: &str = include_str!("inputs/day08.txt");
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> usize {
     let lines = input.lines().collect::<Vec<&str>>();
     lines.iter().map(|l| l.len() - in_memory_size(l)).sum()
 }
@@ -27,20 +27,7 @@ fn in_memory_size(s: &str) -> usize {
         - 2
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_p1() {
-        assert_eq!(in_memory_size("\"\""), 0);
-        assert_eq!(in_memory_size("\"abc\""), 3);
-        assert_eq!(in_memory_size("\"aaa\\\"aaa\""), 7);
-        assert_eq!(in_memory_size("\"\\x27\""), 1);
-    }
-}
-
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let lines = input.lines().collect::<Vec<&str>>();
     lines.iter().map(|l| encoded_size(l) - l.len()).sum()
 }
@@ -65,4 +52,17 @@ fn main() {
     let now = Instant::now();
     let solution = p2(INPUT);
     println!("p2 {:?} {}", now.elapsed(), solution);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_p1() {
+        assert_eq!(in_memory_size("\"\""), 0);
+        assert_eq!(in_memory_size("\"abc\""), 3);
+        assert_eq!(in_memory_size("\"aaa\\\"aaa\""), 7);
+        assert_eq!(in_memory_size("\"\\x27\""), 1);
+    }
 }

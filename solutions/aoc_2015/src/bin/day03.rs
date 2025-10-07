@@ -1,6 +1,6 @@
-use std::collections::HashSet;
+use itertools::Itertools;
 
-const INPUT: &'static str = include_str!("inputs/day03.txt");
+const INPUT: &str = include_str!("inputs/day03.txt");
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Point {
@@ -28,40 +28,34 @@ impl Point {
     }
 }
 
-pub fn p1(input: &str) -> usize {
-    let mut cur = Point::new(0, 0);
-
-    let mut seen = HashSet::new();
-    seen.insert(cur);
-
-    for c in input.chars() {
-        cur = cur.next(c);
-        seen.insert(cur);
-    }
-
-    seen.len()
+// Move santa around based on the input directions and count the unique points visited.
+fn p1(input: &str) -> usize {
+    // We can use scan() and unique() to do the same thing as tracking cur and using a HashSet.
+    input
+        .chars()
+        .scan(Point::new(0, 0), |cur, c| {
+            *cur = cur.next(c);
+            Some(*cur)
+        })
+        .chain(std::iter::once(Point::new(0, 0)))
+        .unique()
+        .count()
 }
 
-pub fn p2(input: &str) -> usize {
-    let mut cur_santa = Point::new(0, 0);
-    let mut cur_robo_santa = Point::new(0, 0);
-
-    let mut seen = HashSet::new();
-    seen.insert(cur_santa);
-
-    let mut santas_turn = true;
-    for c in input.chars() {
-        if santas_turn {
-            cur_santa = cur_santa.next(c);
-            seen.insert(cur_santa);
-        } else {
-            cur_robo_santa = cur_robo_santa.next(c);
-            seen.insert(cur_robo_santa);
-        }
-        santas_turn = !santas_turn;
-    }
-
-    seen.len()
+// Same as p1 but with two points (santa and robo-santa) moving alternately.
+fn p2(input: &str) -> usize {
+    // We can do the same thing as p1, but track two points in the scan() using an array.
+    input
+        .chars()
+        .enumerate()
+        .scan([Point::new(0, 0), Point::new(0, 0)], |cur, (i, c)| {
+            let index = i % 2;
+            cur[index] = cur[index].next(c);
+            Some(cur[index])
+        })
+        .chain(std::iter::once(Point::new(0, 0)))
+        .unique()
+        .count()
 }
 
 fn main() {

@@ -1,58 +1,52 @@
-const INPUT: &'static str = include_str!("inputs/day11.txt");
+use std::time::Instant;
 
-fn increment(cur: &Vec<u8>) -> Vec<u8> {
-    let mut next = cur.clone();
+use itertools::Itertools;
 
-    let mut pos = next.len() - 1;
+const INPUT: &str = include_str!("inputs/day11.txt");
+
+fn increment(cur: &mut [u8]) {
+    let mut pos = cur.len() - 1;
     loop {
-        if next[pos] != b'z' {
-            next[pos] += 1;
-            // If you need to optimize for longer increments, this part would help:
-            // if next[pos] == b'i' || next[pos] == b'o' || next[pos] == b'l' {
-            //     next[pos] += 1;
-            //     for i in pos + 1..next.len() {
-            //         next[i] = b'a';
-            //     }
-            // }
+        if cur[pos] != b'z' {
+            cur[pos] += 1;
             break;
         }
 
-        next[pos] = b'a';
+        cur[pos] = b'a';
         if pos == 0 {
             break;
         }
         pos -= 1;
     }
-
-    next
 }
 
-pub fn valid(password: &Vec<u8>) -> bool {
-    if !password
+fn has_straight(password: &[u8]) -> bool {
+    password
         .windows(3)
-        .map(|w| w[0] == w[1] - 1 && w[1] == w[2] - 1)
-        .any(|f| f)
-    {
-        return false;
-    }
+        .any(|w| w[0] == w[1] - 1 && w[1] == w[2] - 1)
+}
 
-    if password.contains(&b'i') || password.contains(&b'o') || password.contains(&b'l') {
-        return false;
-    }
+fn no_banned_chars(password: &[u8]) -> bool {
+    !password
+        .iter()
+        .any(|&c| c == b'i' || c == b'o' || c == b'l')
+}
 
-    let mut seen = HashSet::new();
-    password.windows(2).for_each(|w| {
-        if w[0] == w[1] {
-            seen.insert(w[0]);
-        }
-    });
-    seen.len() >= 2
+fn has_two_pairs(password: &[u8]) -> bool {
+    password.iter().dedup_with_count()
+        .filter(|&(count, _)| count >= 2)
+        .map(|(count, _)| count / 2)
+        .sum::<usize>() >= 2
+}
+
+pub fn valid(password: &[u8]) -> bool {
+    has_straight(password) && no_banned_chars(password) && has_two_pairs(password)
 }
 
 fn find_next_valid_password(password: &str) -> String {
-    let mut cur = password.chars().map(|c| c as u8).collect();
+    let mut cur = password.chars().map(|c| c as u8).collect::<Vec<u8>>();
     loop {
-        cur = increment(&cur);
+        increment(&mut cur);
         if valid(&cur) {
             break;
         }
@@ -61,15 +55,13 @@ fn find_next_valid_password(password: &str) -> String {
     cur.iter().map(|i| *i as char).collect()
 }
 
-pub fn p1(input: &str) -> String {
+fn p1(input: &str) -> String {
     find_next_valid_password(input.trim())
 }
 
-pub fn p2(input: &str) -> String {
+fn p2(input: &str) -> String {
     find_next_valid_password(input.trim())
 }
-
-use std::{collections::HashSet, time::Instant};
 
 fn main() {
     let now = Instant::now();

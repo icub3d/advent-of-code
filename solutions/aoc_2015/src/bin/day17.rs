@@ -1,12 +1,13 @@
-use std::{time::Instant, usize};
+use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day17.txt");
+const INPUT: &str = include_str!("inputs/day17.txt");
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> usize {
     let containers = input
         .lines()
-        .map(|l| l.parse().unwrap())
-        .collect::<Vec<isize>>();
+        .map(|l| l.parse())
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
     p1_helper(&containers, 150)
 }
 
@@ -23,11 +24,12 @@ fn p1_helper(containers: &[isize], remaining: isize) -> usize {
         .sum()
 }
 
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let containers = input
         .lines()
-        .map(|l| l.parse().unwrap())
-        .collect::<Vec<isize>>();
+        .map(|l| l.parse())
+        .collect::<Result<Vec<_>, _>>()
+        .unwrap();
     let mut min_size = usize::MAX;
     let mut min_count = 0;
     let mut used = vec![];

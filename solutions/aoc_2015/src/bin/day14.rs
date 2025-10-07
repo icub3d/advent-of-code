@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use itertools::Itertools;
 
-const INPUT: &'static str = include_str!("inputs/day14.txt");
+const INPUT: &str = include_str!("inputs/day14.txt");
 
 #[derive(Debug)]
 struct Reindeer {
@@ -29,7 +29,7 @@ impl Reindeer {
     }
 }
 
-pub fn p1(input: &str) -> usize {
+fn p1(input: &str) -> usize {
     input
         .lines()
         .map(Reindeer::parse)
@@ -38,12 +38,12 @@ pub fn p1(input: &str) -> usize {
         .unwrap()
 }
 
-fn farthest_at_time(reindeer: &Vec<Reindeer>, time: usize) -> Vec<usize> {
+fn farthest_at_time(reindeer: &[Reindeer], time: usize) -> Vec<usize> {
     let mut farthest: Vec<usize> = vec![];
     let mut dist = usize::MIN;
 
-    for cur in 0..reindeer.len() {
-        let cur_dist = reindeer[cur].distance(time);
+    for (cur, r) in reindeer.iter().enumerate() {
+        let cur_dist = r.distance(time);
         match cur_dist.cmp(&dist) {
             std::cmp::Ordering::Equal => farthest.push(cur),
             std::cmp::Ordering::Greater => {
@@ -56,7 +56,7 @@ fn farthest_at_time(reindeer: &Vec<Reindeer>, time: usize) -> Vec<usize> {
     farthest
 }
 
-pub fn p2(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let reindeer = input
         .lines()
         .map(Reindeer::parse)

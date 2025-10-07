@@ -1,43 +1,33 @@
 use std::time::Instant;
 
-const INPUT: &'static str = include_str!("inputs/day20.txt");
+const INPUT: &str = include_str!("inputs/day20.txt");
 
-fn find_elves(n: usize) -> Vec<usize> {
-    let mut elves = Vec::new();
-    let limit = (n as f64).sqrt() as usize;
-
-    for i in 1..=limit {
-        if n % i == 0 {
-            elves.push(i);
-            if i * i != n {
-                // Avoid adding the same divisor twice for perfect squares
-                elves.push(n / i);
-            }
+fn p1(input: &str) -> usize {
+    let input = input.trim().parse::<usize>().unwrap();
+    let mut presents = vec![0; 1_000_000];
+    for elf in 1..presents.len() {
+        for house in (elf..presents.len()).step_by(elf) {
+            presents[house] += 10 * elf;
+        }
+        if presents[elf] >= input {
+            return elf;
         }
     }
-
-    elves
+    0
 }
 
-pub fn p1(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     let input = input.trim().parse::<usize>().unwrap();
-    (1_usize..)
-        .find(|i| find_elves(*i).iter().sum::<usize>() * 10 >= input)
-        .unwrap()
-}
-
-pub fn p2(input: &str) -> usize {
-    let input = input.trim().parse::<usize>().unwrap();
-    (1_usize..)
-        .find(|i| {
-            find_elves(*i)
-                .iter()
-                .filter(|n| i / **n <= 50)
-                .map(|n| *n * 11)
-                .sum::<usize>()
-                >= input
-        })
-        .unwrap()
+    let mut presents = vec![0; 1_000_000];
+    for elf in 1..presents.len() {
+        for house in (elf..presents.len()).step_by(elf).take(50) {
+            presents[house] += 11 * elf;
+        }
+        if presents[elf] >= input {
+            return elf;
+        }
+    }
+    0
 }
 
 fn main() {

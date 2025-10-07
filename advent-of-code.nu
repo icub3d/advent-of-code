@@ -223,13 +223,13 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &'" + 'static str = include_str!("inputs/' + $day_mod + '.txt");
+    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &str = include_str!(\"inputs/" + $day_mod + '.txt");
 
-pub fn p1(input: &str) -> i32 {
+fn p1(input: &str) -> i32 {
     0
 }
 
-pub fn p2(input: &str) -> i32 {
+fn p2(input: &str) -> i32 {
     0
 }
 

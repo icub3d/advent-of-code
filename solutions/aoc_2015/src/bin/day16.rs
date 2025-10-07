@@ -1,8 +1,10 @@
-use std::{collections::HashMap, time::Instant};
+use std::{sync::OnceLock, time::Instant};
 
-const INPUT: &'static str = include_str!("inputs/day16.txt");
+use rustc_hash::FxHashMap;
 
-fn parse<'a>(line: &'a str) -> (isize, Vec<(&'a str, isize)>) {
+const INPUT: &str = include_str!("inputs/day16.txt");
+
+fn parse(line: &str) -> (isize, Vec<(&str, isize)>) {
     let mut parts = line.splitn(2, ':');
     let name = parts
         .next()
@@ -25,7 +27,7 @@ fn parse<'a>(line: &'a str) -> (isize, Vec<(&'a str, isize)>) {
     (name, compounds)
 }
 
-const EXPECTED: &'static str = "children: 3
+const EXPECTED_VALUES: &str = "children: 3
 cats: 7
 samoyeds: 2
 pomeranians: 3
@@ -36,12 +38,43 @@ trees: 3
 cars: 2
 perfumes: 1";
 
-pub fn p1(input: &str) -> isize {
+static EXPECTED: OnceLock<FxHashMap<&'static str, isize>> = OnceLock::new();
+
+fn expected() -> &'static FxHashMap<&'static str, isize> {
+    EXPECTED.get_or_init(|| {
+        let mut m = FxHashMap::default();
+        for line in EXPECTED_VALUES.lines() {
+            let mut parts = line.split(": ");
+            let name = parts.next().unwrap().trim();
+            let count: isize = parts.next().unwrap().parse().unwrap();
+            m.insert(name, count);
+        }
+        m
+    })
+}
+
+fn find_match<F>(input: &str, f: F) -> isize
+where
+    F: Fn(&str, isize, isize) -> bool,
+{
+    input
+        .lines()
+        .map(parse)
+        .find(|(_, compounds)| {
+            compounds
+                .iter()
+                .all(|(name, count)| f(name, *count, *expected().get(name).unwrap()))
+        })
+        .unwrap()
+        .0
+}
+
+fn p1(input: &str) -> isize {
     let is_match = |_: &str, count: isize, expected: isize| -> bool { count == expected };
     find_match(input, is_match)
 }
 
-pub fn p2(input: &str) -> isize {
+fn p2(input: &str) -> isize {
     // closure that returns true when the compound indicates this Sue should be skipped
     let is_match = |name: &str, count: isize, expected: isize| -> bool {
         match name {
@@ -55,33 +88,6 @@ pub fn p2(input: &str) -> isize {
     };
 
     find_match(input, is_match)
-}
-
-fn find_match<F>(input: &str, f: F) -> isize
-where
-    F: Fn(&str, isize, isize) -> bool,
-{
-    let expected = EXPECTED
-        .lines()
-        .map(|l| {
-            let mut parts = l.split(": ");
-            (
-                parts.next().unwrap(),
-                parts.next().unwrap().parse::<isize>().unwrap(),
-            )
-        })
-        .collect::<HashMap<&str, isize>>();
-
-    input
-        .lines()
-        .map(parse)
-        .find(|(_, compounds)| {
-            compounds
-                .iter()
-                .all(|(name, count)| f(name, *count, *expected.get(name).unwrap()))
-        })
-        .unwrap()
-        .0
 }
 
 fn main() {

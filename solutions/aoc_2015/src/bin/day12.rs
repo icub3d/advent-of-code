@@ -1,6 +1,10 @@
-const INPUT: &'static str = include_str!("inputs/day12.txt");
+use std::time::Instant;
 
-pub fn p1(input: &Value) -> i64 {
+use serde_json::Value;
+
+const INPUT: &str = include_str!("inputs/day12.txt");
+
+fn p1(input: &Value) -> i64 {
     match input {
         Value::Number(n) => n.as_i64().unwrap(),
         Value::Array(a) => a.iter().map(p1).sum(),
@@ -9,15 +13,13 @@ pub fn p1(input: &Value) -> i64 {
     }
 }
 
-pub fn p2(input: &Value) -> i64 {
+fn p2(input: &Value) -> i64 {
     match input {
         Value::Number(n) => n.as_i64().unwrap(),
         Value::Array(a) => a.iter().map(p2).sum(),
         Value::Object(o) => {
             // If we have a "red" value, return 0 instead.
-            if o.values()
-                .any(|v| matches!(v, Value::String(s) if s == "red"))
-            {
+            if o.values().any(|v| v == "red") {
                 0
             } else {
                 o.values().map(p2).sum()
@@ -26,10 +28,6 @@ pub fn p2(input: &Value) -> i64 {
         _ => 0,
     }
 }
-
-use std::time::Instant;
-
-use serde_json::Value;
 
 fn main() {
     let now = Instant::now();
