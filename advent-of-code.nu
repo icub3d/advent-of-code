@@ -1,4 +1,3 @@
-#     println!("🎄 Advent of Code {} - Day {} 🎄", args.year, args.day);
 # A helper to print messages in a consistent style
 def "print-info" [message: string] {
     print $"✅ ($message)"
@@ -99,7 +98,6 @@ export def "aoc all" [year: int] {
 
         print $"total time: ($total_duration)"
         $table
-        | table
     }
 }
 
@@ -158,7 +156,7 @@ export def "new-year" [
     let crate_path = $"solutions/($crate_name)"
 
     # --- 1. Validation ---
-    if not ("runner" | path exists) or not ("solutions" | path exists) {
+    if not ("solutions" | path exists) {
         print-error "This script must be run from the root of your AoC workspace."
         return
     }
@@ -184,13 +182,18 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+pathfinding = { workspace = true }
+serde_json = { workspace = true }
+rustc-hash = { workspace = true }
+itertools = { workspace = true }
+rayon = { workspace = true }
 "
 
     $new_cargo_toml | save --force $"($crate_path)/Cargo.toml"
     print-info $"Configured '($crate_path)/Cargo.toml'"
 
     rm $"($crate_path)/src/lib.rs"
-    mkdir $"($crate_path)/src/inputs"
+    mkdir $"($crate_path)/src/bin/inputs"
     print-info $"Created inputs directory"
 
     print $"\n🎉 Successfully set up year ($year)! You can now add daily solutions."
@@ -223,24 +226,30 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &str = include_str!(\"inputs/" + $day_mod + '.txt");
+    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &str = include_str!(\"inputs/" + $day_mod + ".txt\");
 
-fn p1(input: &str) -> i32 {
+" + "type Input<'a> = Vec<&'a str>;
+
+fn parse_input(input: &'_ str) -> Input<'_> {
+    input.lines().collect()
+}
+
+" + 'fn p1(_input: &Input) -> usize {
     0
 }
 
-fn p2(input: &str) -> i32 {
+fn p2(_input: &Input) -> usize {
     0
 }
-
 
 fn main() {
     let now = Instant::now();
-    let solution = p1(INPUT);
+    let input = parse_input(INPUT);
+    let solution = p1(&input);
     println!("p1 {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
-    let solution = p2(INPUT);
+    let solution = p2(&input);
     println!("p2 {:?} {}", now.elapsed(), solution);
 }
 '
@@ -345,13 +354,13 @@ export def "upload-gist" [
     let result = do -i { ^$cmd }
     if ($result | describe) == 'string' {
         print-info "Gist uploaded successfully!"
-        print $result
+        $result
     } else if ($result.exit_code? | default 1) == 0 {
         print-info "Gist uploaded successfully!"
-        print ($result.stdout? | default "")
+        $result.stdout? | default ""
     } else {
         print-error "Failed to upload Gist."
-        print ($result.stderr? | default $result)
+        $result.stderr? | default $result
     }
 }
 

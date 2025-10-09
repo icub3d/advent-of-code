@@ -26,6 +26,7 @@
         "serde",
         "splitn",
         "ugknbfddgicrmopn",
+        "usize",
         "vizslas"
     ]
 }
