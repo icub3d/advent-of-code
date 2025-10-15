@@ -8,6 +8,12 @@ def "print-error" [message: string] {
     print -e $"❌ ERROR: ($message)"
 }
 
+# Clear the terminal and scrollback so watch output starts from a clean buffer.
+def "reset-terminal" [] {
+    print -n (ansi clsb)
+    print -n (ansi home)
+}
+
 # Normalize and convert a debug-formatted Rust Duration string into a Nushell duration
 def "parse-duration" [value: string] {
     $value
@@ -123,7 +129,7 @@ export def "aoc watch" [
     --test # Run tests instead of the solution
 ] {
     watch --quiet . --glob=**/*.rs {||
-        clear
+        reset-terminal
         try { 
             if $test {
                 aoc test $year $day
@@ -146,9 +152,9 @@ export def "aoc watch" [
 # 3. Update the `runner` crate to depend on and call the new crate.
 #
 # Usage:
-# > new-year 2025
+# > aoc new year 2025
 ###
-export def "new-year" [
+export def "aoc new year" [
     year: int, # The Advent of Code year to set up (e.g., 2025)
 ] {
     let year_str = $"($year)"
@@ -200,8 +206,8 @@ rayon = { workspace = true }
 }
 
 # Adds a new day module to a given year crate and creates boilerplate for that day.
-# Usage: new-day 2025 1
-export def "new-day" [
+# Usage: aoc new day 2025 1
+export def "aoc new day" [
     year: int, # The Advent of Code year (e.g., 2025)
     day: int   # The day number (e.g., 1)
 ] {
@@ -226,34 +232,8 @@ export def "new-day" [
         print-error $"Day ($day) already exists for year ($year_str) at '($day_file)'!"
         return
     }
-    let day_boiler = "use std::time::Instant;\n\nconst INPUT: &str = include_str!(\"inputs/" + $day_mod + ".txt\");
-
-" + "type Input<'a> = Vec<&'a str>;
-
-fn parse_input(input: &'_ str) -> Input<'_> {
-    input.lines().collect()
-}
-
-" + 'fn p1(_input: &Input) -> usize {
-    0
-}
-
-fn p2(_input: &Input) -> usize {
-    0
-}
-
-fn main() {
-    let now = Instant::now();
-    let input = parse_input(INPUT);
-    let solution = p1(&input);
-    println!("p1 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p2(&input);
-    println!("p2 {:?} {}", now.elapsed(), solution);
-}
-'
-    $day_boiler | save --force $day_file
+    let day_boiler = (cat template.rs) 
+    $day_boiler | str replace "[DAY]" $day_mod | save --force $day_file
     print-info $"Created boilerplate for ($day_mod) at '($day_file)'"
 }
 
@@ -283,7 +263,7 @@ export def "get-input" [
 
     if not ($crate_path | path exists) {
         print-error $"Solution crate for year ($year_str) does not exist."
-        print -e $"Run `new-year ($year_str)` first."
+        print -e $"Run `aoc new year ($year_str)` first."
         return
     }
 

@@ -31,6 +31,7 @@ dependencies = [
  "hex-literal",
  "itertools",
  "md-5",
+ "modinverse",
  "pathfinding",
  "rayon",
  "rustc-hash",
@@ -204,6 +205,24 @@ name = "memchr"
 version = "2.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32a282da65faaf38286cf3be983213fcf1d2e2a58700e808f83f4ea9a4804bc0"
+
+[[package]]
+name = "modinverse"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f62f577f148cc1a9466e7065a22e59466a7d537cceba5e77e57181d0f706633"
+dependencies = [
+ "num-integer",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7969661fd2958a5cb096e56c8e1ad0444ac2bbcd0061bd28660485a44879858f"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "num-traits"
