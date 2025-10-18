@@ -10,8 +10,9 @@ def "print-error" [message: string] {
 
 # Clear the terminal and scrollback so watch output starts from a clean buffer.
 def "reset-terminal" [] {
-    print -n (ansi clsb)
-    print -n (ansi home)
+    print -n "\u{001b}c"
+    print -n "\u{001b}[3J\u{001b}[H\u{001b}[2J"
+    print -n "\u{001b}[0m"
 }
 
 # Normalize and convert a debug-formatted Rust Duration string into a Nushell duration
@@ -128,18 +129,23 @@ export def "aoc watch" [
     day: int,
     --test # Run tests instead of the solution
 ] {
+    aoc-watch-helper $year $day --test=$test
     watch --quiet . --glob=**/*.rs {||
-        reset-terminal
-        try { 
-            if $test {
-                aoc test $year $day
-            } else {
-                aoc $year $day 
-            }
-        } catch { |err| 
-            print-error $"Compilation failed: ($err.msg)"
-            print "🔄 Watching for changes..."
+      aoc-watch-helper $year $day --test=$test
+    }
+}
+
+def aoc-watch-helper [year: int, day: int, --test] {
+    reset-terminal
+    try { 
+        if $test {
+            aoc test $year $day
+        } else {
+            aoc $year $day 
         }
+    } catch { |err| 
+        print-error $"Compilation failed: ($err.msg)"
+        print "🔄 Watching for changes..."
     }
 }
 
@@ -346,7 +352,7 @@ export def "upload-gist" [
 
 # Generate a YouTube description with timestamps from a stage progress JSON file.
 # Usage: youtube-desc path/to/2015-13.json
-export def "youtube-desc" [
+export def "aoc yt" [
     file: string # The path to the JSON file (e.g., '2015-13.json')
 ] {
     let file = ($file | path expand)
