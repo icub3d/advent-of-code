@@ -4,6 +4,8 @@ use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 const INPUT: &str = include_str!("inputs/day11.txt");
+const FLOOR_COUNT: usize = 4;
+const TOP_FLOOR: usize = FLOOR_COUNT - 1;
 
 #[derive(Clone, Debug, Eq)]
 struct State {
@@ -11,22 +13,17 @@ struct State {
     equipment: Vec<(usize, usize)>,
 }
 
+// States where the equipment is the same but in different orders are equivalent.
 impl PartialEq for State {
     fn eq(&self, other: &Self) -> bool {
-        let mut se = self.equipment.clone();
-        se.sort();
-        let mut oe = other.equipment.clone();
-        oe.sort();
-        self.elevator == other.elevator && se == oe
+        self.elevator == other.elevator && self.equipment == other.equipment
     }
 }
 
 impl Hash for State {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         state.write_usize(self.elevator);
-        let mut equipment = self.equipment.clone();
-        equipment.sort();
-        equipment.iter().for_each(|&(chip, generator)| {
+        self.equipment.iter().for_each(|&(chip, generator)| {
             state.write_usize(chip);
             state.write_usize(generator);
         })
@@ -34,31 +31,34 @@ impl Hash for State {
 }
 
 impl State {
+    fn normalize(&mut self) {
+        self.equipment.sort_unstable();
+    }
+
     fn done(&self) -> bool {
         self.equipment
             .iter()
-            .all(|&(chip, generator)| chip == 3 && generator == 3)
+            .all(|&(chip, generator)| chip == TOP_FLOOR && generator == TOP_FLOOR)
     }
 
     fn valid(&self) -> bool {
-        // Get the floors that have a generator
-        let floors = self
-            .equipment
+        let mut generators = [0usize; FLOOR_COUNT];
+        self.equipment
             .iter()
-            .map(|&(_, g)| g)
-            .sorted()
-            .unique()
-            .collect::<Vec<usize>>();
+            .for_each(|&(_, generator)| generators[generator] += 1);
 
-        !self
-            .equipment
+        self.equipment
             .iter()
-            .any(|(chip, generator)| floors.contains(chip) && generator != chip)
+            .all(|&(chip, generator)| generator == chip || generators[chip] == 0)
+    }
+
+    fn has_lower_items(&self) -> bool {
+        self.equipment
+            .iter()
+            .any(|&(chip, generator)| chip < self.elevator || generator < self.elevator)
     }
 
     fn successors(&self) -> Vec<State> {
-        let mut successors = Vec::new();
-
         let on_this_floor = self
             .equipment
             .iter()
@@ -75,53 +75,82 @@ impl State {
             })
             .collect::<Vec<(usize, bool)>>();
 
-        // Go up or down on elevator.
-        for new_floor in [self.elevator + 1, self.elevator.saturating_sub(1)] {
-            if new_floor > 3 || new_floor == self.elevator {
-                continue;
-            }
-            // Add for single
-            on_this_floor.iter().for_each(|&(floor, is_chip)| {
-                let mut new_state = self.clone();
-                new_state.elevator = new_floor;
+        let mut up_single = Vec::new();
+        let mut up_double = Vec::new();
+        let mut down_single = Vec::new();
+        let mut down_double = Vec::new();
+
+        let try_move = |items: &[(usize, bool)], new_floor: usize| -> Option<State> {
+            let mut new_state = self.clone();
+            new_state.elevator = new_floor;
+            items.iter().for_each(|&(idx, is_chip)| {
                 if is_chip {
-                    new_state.equipment[floor].0 = new_floor;
+                    new_state.equipment[idx].0 = new_floor;
                 } else {
-                    new_state.equipment[floor].1 = new_floor;
-                }
-                if new_state.valid() {
-                    successors.push(new_state);
+                    new_state.equipment[idx].1 = new_floor;
                 }
             });
-
-            // Add combinations of two
-            if on_this_floor.len() < 2 {
-                continue;
+            new_state.normalize();
+            if new_state.valid() {
+                Some(new_state)
+            } else {
+                None
             }
+        };
 
-            on_this_floor.iter().tuple_combinations().for_each(
-                |(&(floor1, is_chip1), &(floor2, is_chip2))| {
-                    let mut new_state = self.clone();
-                    new_state.elevator = new_floor;
-                    if is_chip1 {
-                        new_state.equipment[floor1].0 = new_floor;
-                    } else {
-                        new_state.equipment[floor1].1 = new_floor;
+        if self.elevator < TOP_FLOOR {
+            let target = self.elevator + 1;
+            for &item in &on_this_floor {
+                if let Some(state) = try_move(&[item], target) {
+                    if up_single.iter().any(|s| s == &state) {
+                        continue;
                     }
-                    if is_chip2 {
-                        new_state.equipment[floor2].0 = new_floor;
-                    } else {
-                        new_state.equipment[floor2].1 = new_floor;
+                    up_single.push(state);
+                }
+            }
+            for (&item1, &item2) in on_this_floor.iter().tuple_combinations() {
+                if let Some(state) = try_move(&[item1, item2], target) {
+                    if up_double.iter().any(|s| s == &state) {
+                        continue;
                     }
-                    if new_state.valid() {
-                        successors.push(new_state);
-                    }
-                },
-            );
+                    up_double.push(state);
+                }
+            }
         }
-        // Move one or two on the current floor.
-        // Check if valid.
-        //
+
+        if self.elevator > 0 && self.has_lower_items() {
+            let target = self.elevator - 1;
+            for &item in &on_this_floor {
+                if let Some(state) = try_move(&[item], target) {
+                    if down_single.iter().any(|s| s == &state) {
+                        continue;
+                    }
+                    down_single.push(state);
+                }
+            }
+            for (&item1, &item2) in on_this_floor.iter().tuple_combinations() {
+                if let Some(state) = try_move(&[item1, item2], target) {
+                    if down_double.iter().any(|s| s == &state) {
+                        continue;
+                    }
+                    down_double.push(state);
+                }
+            }
+        }
+
+        let mut successors = Vec::new();
+        if !up_double.is_empty() {
+            successors.extend(up_double);
+        } else {
+            successors.extend(up_single);
+        }
+
+        if !down_single.is_empty() {
+            successors.extend(down_single);
+        } else {
+            successors.extend(down_double);
+        }
+
         successors
     }
 }
@@ -135,6 +164,7 @@ fn parse_input(input: &'_ str) -> Input<'_> {
         l.split_whitespace()
             .map(|c| c.trim_end_matches('.').trim_end_matches(','))
             .tuple_windows()
+            // We are looking for pairs like "hydrogen-compatible microchip" or "lithium generator"
             .filter(|(_, b)| *b == "generator" || *b == "microchip")
             .for_each(
                 |(name, typ)| match names.get(name.trim_end_matches("-compatible")) {
@@ -155,10 +185,12 @@ fn parse_input(input: &'_ str) -> Input<'_> {
             )
     });
 
-    State {
+    let mut state = State {
         elevator: 0,
         equipment,
-    }
+    };
+    state.normalize();
+    state
 }
 
 fn bfs(input: &Input) -> usize {
@@ -175,7 +207,7 @@ fn bfs(input: &Input) -> usize {
 
         for successor in state.successors() {
             if visited.insert(successor.clone()) {
-                frontier.push_back((successor.clone(), count + 1));
+                frontier.push_back((successor, count + 1));
             }
         }
     }
@@ -191,6 +223,7 @@ fn p2(input: &Input) -> usize {
     let mut input = input.clone();
     input.equipment.push((0, 0));
     input.equipment.push((0, 0));
+    input.normalize();
     bfs(&input)
 }
 

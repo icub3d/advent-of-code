@@ -107,12 +107,6 @@ fn bfs(start: &State) -> String {
             return state.directions.iter().map(|&b| b as char).collect();
         }
 
-        // state
-        //     .neighbors()
-        //     .iter()
-        //     .filter(|&n| visited.insert(n.clone()))
-        //     .for_each(|n| frontier.push_back(n.clone()));
-
         for neighbor in state.neighbors() {
             if visited.insert(neighbor.clone()) {
                 frontier.push_back(neighbor);
@@ -132,8 +126,7 @@ fn bfs_all(start: &State) -> usize {
     let mut frontier = VecDeque::new();
     frontier.push_back(start.clone());
 
-    let mut visited = FxHashSet::default();
-    visited.insert(start.clone());
+    // You don't need the visited hash here because the MD5 hash of the path implies uniqueness.
 
     let mut max = 0;
     while let Some(state) = frontier.pop_front() {
@@ -143,9 +136,7 @@ fn bfs_all(start: &State) -> usize {
         }
 
         for neighbor in state.neighbors() {
-            if visited.insert(neighbor.clone()) {
-                frontier.push_back(neighbor);
-            }
+            frontier.push_back(neighbor);
         }
     }
 

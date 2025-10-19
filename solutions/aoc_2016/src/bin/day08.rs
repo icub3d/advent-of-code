@@ -38,6 +38,7 @@ fn parse_input(input: &'_ str) -> Input<'_> {
 
 const WIDTH: usize = 50;
 const HEIGHT: usize = 6;
+const LETTER_WIDTH: usize = 5;
 
 struct Screen {
     pixels: [[char; WIDTH]; HEIGHT],
@@ -72,37 +73,59 @@ impl Screen {
     fn apply(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::Rect(w, h) => self.rect(*w, *h),
-            Instruction::RotateRow(row, distance) => self.rotate_row(*row, *distance),
+            Instruction::RotateRow(row, distance) => self.pixels[*row].rotate_right(*distance),
             Instruction::RotateColumn(row, distance) => self.rotate_column(*row, *distance),
         }
     }
 
     fn rect(&mut self, width: usize, height: usize) {
-        for w in 0..width.min(WIDTH) {
-            for h in 0..height.min(HEIGHT) {
-                self.pixels[h][w] = '#';
-            }
-        }
-    }
-
-    fn rotate_row(&mut self, row: usize, distance: usize) {
-        // Grab row and clone it.
-        let old_row = self.pixels[row];
-
-        // Do match to figure out where each should go and place it in myself.
-        for (i, b) in old_row.iter().enumerate() {
-            self.pixels[row][(i + distance) % WIDTH] = *b;
+        for h in 0..height.min(HEIGHT) {
+            self.pixels[h][..width.min(WIDTH)].fill('#');
         }
     }
 
     fn rotate_column(&mut self, column: usize, distance: usize) {
-        // Grab column and clone it.
-        let old_column = self.pixels.iter().map(|r| r[column]).collect::<Vec<_>>();
+        // Grab column and rotate it.
+        let mut new_column = self.pixels.iter().map(|r| r[column]).collect::<Vec<_>>();
+        new_column.rotate_right(distance);
 
-        // Do match to figure out where each should go and place it in myself.
-        for (i, b) in old_column.iter().enumerate() {
-            self.pixels[(i + distance) % HEIGHT][column] = *b;
+        // Put the new column back in place.
+        for (row, val) in self.pixels.iter_mut().zip(new_column.iter()) {
+            row[column] = *val;
         }
+    }
+
+    fn decode_message(&self) -> String {
+        let mut message = String::new();
+
+        for start in (0..WIDTH).step_by(LETTER_WIDTH) {
+            if start + LETTER_WIDTH > WIDTH {
+                break;
+            }
+
+            let mut glyph = String::new();
+            let mut has_lit_pixel = false;
+
+            for row in 0..HEIGHT {
+                let slice = &self.pixels[row][start..start + LETTER_WIDTH];
+                if slice.contains(&'#') {
+                    has_lit_pixel = true;
+                }
+                glyph.extend(slice);
+                if row + 1 < HEIGHT {
+                    glyph.push('\n');
+                }
+            }
+
+            if !has_lit_pixel {
+                continue;
+            }
+
+            let letter = decode_glyph(&glyph).unwrap_or('?');
+            message.push(letter);
+        }
+
+        message
     }
 }
 
@@ -115,7 +138,7 @@ fn p1(input: &Input) -> usize {
 fn p2(input: &Input) -> String {
     let mut screen = Screen::new();
     input.iter().for_each(|i| screen.apply(i));
-    format!("\n{}", screen)
+    screen.decode_message()
 }
 
 fn main() {
@@ -127,4 +150,18 @@ fn main() {
     let now = Instant::now();
     let solution = p2(&input);
     println!("p2 {:?} {}", now.elapsed(), solution);
+}
+
+fn decode_glyph(pattern: &str) -> Option<char> {
+    match pattern {
+        "####.\n#....\n###..\n#....\n#....\n####." => Some('E'),
+        ".##..\n#..#.\n#..#.\n#..#.\n#..#.\n.##.." => Some('O'),
+        ".##..\n#..#.\n#..#.\n####.\n#..#.\n#..#." => Some('A'),
+        "###..\n#..#.\n#..#.\n###..\n#.#..\n#..#." => Some('R'),
+        ".##..\n#..#.\n#....\n#.##.\n#..#.\n.###." => Some('G'),
+        "###..\n#..#.\n#..#.\n###..\n#....\n#...." => Some('P'),
+        "#..#.\n#..#.\n####.\n#..#.\n#..#.\n#..#." => Some('H'),
+        "#...#\n#...#\n.#.#.\n..#..\n..#..\n..#.." => Some('Y'),
+        _ => None,
+    }
 }

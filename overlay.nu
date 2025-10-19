@@ -116,6 +116,66 @@ export def "aoc" [year: int, day: int] {
     cargo run --release -q -p $crate_name --bin $day_mod
 }
 
+# Benchmark a specific day's solution by running it N times and analyzing runtime
+export def "aoc bench" [
+    year: int,
+    day: int,
+    --runs: int = 20  # Number of times to run the solution (default: 20)
+] {
+    let crate_name = $"aoc_($year)"
+    let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })
+    
+    print $"🎄 Benchmarking Advent of Code ($year) - Day ($day) \(($runs) runs) 🎄"
+    
+    # Collect all runs
+    let results = (
+        1..$runs
+        | each {|run_num|
+            let run = (cargo run --release -q -p $crate_name --bin $day_mod | complete)
+            
+            if $run.exit_code != 0 {
+                print-error $"Run ($run_num) failed with exit code ($run.exit_code)"
+                []
+            } else {
+                $run.stdout
+                | str trim
+                | lines
+                | parse "{part} {time} {solution}"
+                | insert run $run_num
+            }
+        }
+        | flatten
+    )
+    
+    if ($results | is-empty) {
+        print-error "No benchmark results collected."
+        return
+    }
+    
+    # Group by part and calculate statistics
+    let stats = (
+        $results
+        | group-by part
+        | items {|part, runs|
+            let durations = ($runs | each {|r| parse-duration ($r.time | default "0ns") })
+            let mean = ($durations | math avg)
+            let min = ($durations | math min)
+            let max = ($durations | math max)
+            
+            {
+                part: $part
+                mean: $mean
+                min: $min
+                max: $max
+                runs: ($runs | length)
+            }
+        }
+    )
+    
+    # Return the stats table
+    $stats
+}
+
 export def "aoc test" [year: int, day: int] {
     let crate_name = $"aoc_($year)"
     let day_mod = (if $day < 10 { $"day0($day)" } else { $"day($day)" })

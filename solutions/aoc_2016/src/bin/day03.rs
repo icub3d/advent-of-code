@@ -1,19 +1,20 @@
-use std::time::Instant;
+use std::{error::Error, time::Instant};
 
 const INPUT: &str = include_str!("inputs/day03.txt");
 
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Input<'a> = Vec<(usize, usize, usize)>;
 
-fn parse_input(input: &'_ str) -> Input<'_> {
+fn parse_input(input: &'_ str) -> Result<Input<'_>> {
     input
         .lines()
         .map(|l| {
-            let mut parts = l.split_whitespace().map(|c| c.parse::<usize>().unwrap());
-            (
-                parts.next().unwrap(),
-                parts.next().unwrap(),
-                parts.next().unwrap(),
-            )
+            let mut parts = l.split_whitespace().map(|c| c.parse::<usize>());
+            Ok((
+                parts.next().unwrap()?,
+                parts.next().unwrap()?,
+                parts.next().unwrap()?,
+            ))
         })
         .collect()
 }
@@ -34,13 +35,15 @@ fn p2(input: &Input) -> usize {
         .sum()
 }
 
-fn main() {
+fn main() -> Result<()> {
     let now = Instant::now();
-    let input = parse_input(INPUT);
+    let input = parse_input(INPUT)?;
     let solution = p1(&input);
     println!("p1 {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
     let solution = p2(&input);
     println!("p2 {:?} {}", now.elapsed(), solution);
+
+    Ok(())
 }

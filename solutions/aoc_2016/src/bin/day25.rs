@@ -106,15 +106,11 @@ fn p1(input: &Input) -> Result<usize> {
 }
 
 fn p1_decode_input() -> usize {
-    let mut a = 0;
-    loop {
+    (0..).find(|&a| {
         let n = a + 7 * 365;
         let x = n ^ (n >> 1);
-        if (x & (x + 1)) == 0 && 1 & n == 0 {
-            return a;
-        }
-        a += 1;
-    }
+        (x & (x + 1)) == 0 && 1 & n == 0
+    }).unwrap()
 }
 
 fn main() -> Result<()> {
@@ -122,9 +118,10 @@ fn main() -> Result<()> {
     let input = parse_input(INPUT)?;
     let solution = p1(&input)?;
     println!("p1 {:?} {}", now.elapsed(), solution);
+
     let now = Instant::now();
     let solution = p1_decode_input();
-    println!("p1_decoded {:?} {}", now.elapsed(), solution);
+    println!("p1 {:?} {}", now.elapsed(), solution);
 
     Ok(())
 }

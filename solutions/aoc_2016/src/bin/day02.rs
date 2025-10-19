@@ -1,49 +1,73 @@
-use std::time::Instant;
+use std::{ops::Add, time::Instant};
 
 const INPUT: &str = include_str!("inputs/day02.txt");
 
+type Int = i32;
 type Input<'a> = Vec<Vec<char>>;
 
 fn parse_input(input: &'_ str) -> Input<'_> {
     input.lines().map(|l| l.trim().chars().collect()).collect()
 }
 
+#[derive(Clone, Copy)]
 struct Point {
-    x: usize,
-    y: usize,
+    x: Int,
+    y: Int,
 }
 
-impl Point {
-    fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-
-    fn next(&self, direction: char, len: usize) -> Self {
-        match direction {
-            'U' => Point::new(self.x, self.y.saturating_sub(1)),
-            'D' => Point::new(self.x, self.y.saturating_add(1).min(len - 1)),
-            'L' => Point::new(self.x.saturating_sub(1), self.y),
-            'R' => Point::new(self.x.saturating_add(1).min(len - 1), self.y),
-            _ => panic!("bad direction"),
+impl Add for Point {
+    type Output = Point;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
         }
     }
 }
 
-fn find_code(pad: &[Vec<char>], input: &Input, x: usize, y: usize) -> String {
-    let mut code = String::new();
+const DELTAS: [Point; 4] = [
+    Point { x: 0, y: -1 },
+    Point { x: 0, y: 1 },
+    Point { x: -1, y: 0 },
+    Point { x: 1, y: 0 },
+];
+
+fn delta(direction: char) -> Point {
+    match direction {
+        'U' => DELTAS[0],
+        'D' => DELTAS[1],
+        'L' => DELTAS[2],
+        _ => DELTAS[3],
+    }
+}
+
+impl Point {
+    fn new(x: Int, y: Int) -> Self {
+        Self { x, y }
+    }
+}
+
+fn find_code(pad: &[Vec<char>], input: &Input, x: Int, y: Int) -> String {
+    let mut code = String::with_capacity(pad.len());
     let mut cur = Point::new(x, y);
+    let len = pad.len() as Int;
     for moves in input {
-        for m in moves {
+        for &m in moves {
             // Get our new positions.
-            let next = cur.next(*m, pad.len());
+            let next = cur + delta(m);
 
             // Verify it's a valid position; we've already done bounds checking in next().
-            if pad[next.y][next.x] == ' ' {
+            if next.x < 0
+                || next.y < 0
+                || next.x >= len
+                || next.y >= len
+                || pad[next.y as usize][next.x as usize] == ' '
+            {
                 continue;
             }
             cur = next;
         }
-        code.push(pad[cur.y][cur.x]);
+        code.push(pad[cur.y as usize][cur.x as usize]);
     }
     code
 }

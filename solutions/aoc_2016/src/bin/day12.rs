@@ -61,9 +61,11 @@ fn parse_input(input: &'_ str) -> Input<'_> {
     input.lines().map(Instruction::parse).collect()
 }
 
-fn p1(input: &Input) -> isize {
+fn sim(input: &Input, initial_c: isize) -> isize {
     let mut pc: isize = 0;
     let mut registers = [0; 4];
+    registers[2] = initial_c;
+
     while pc >= 0 && pc < input.len() as isize {
         match &input[pc as usize] {
             Instruction::Cpy(v, r) => registers[*r] = v.evaluate(&registers),
@@ -81,26 +83,12 @@ fn p1(input: &Input) -> isize {
     registers[0]
 }
 
-fn p2(input: &Input) -> isize {
-    let mut pc: isize = 0;
-    let mut registers = [0; 4];
-    registers[2] = 1;
+fn p1(input: &Input) -> isize {
+    sim(input, 0)
+}
 
-    while pc >= 0 && pc < input.len() as isize {
-        match &input[pc as usize] {
-            Instruction::Cpy(v, r) => registers[*r] = v.evaluate(&registers),
-            Instruction::Inc(r) => registers[*r] += 1,
-            Instruction::Dec(r) => registers[*r] -= 1,
-            Instruction::Jnz(v, i) => {
-                if v.evaluate(&registers) != 0 {
-                    pc += i;
-                    continue;
-                }
-            }
-        }
-        pc += 1;
-    }
-    registers[0]
+fn p2(input: &Input) -> isize {
+    sim(input, 1)
 }
 
 fn main() {
@@ -148,22 +136,18 @@ fn code(p2: bool) -> isize {
     // cpy c b
     // dec d
     // jnz d -6
-    let mut c = 0;
     for _ in 0..d {
-        c = a;
+        let c = a;
         a += b;
         b = c;
     }
 
     // cpy 19 c
     // cpy 11 d
-    c = 19;
-    d = 11;
-
     // inc a
     // dec d
     // jnz d -2
     // dec c
     // jnz c -5
-    a + c * d
+    a + 11 * 19
 }

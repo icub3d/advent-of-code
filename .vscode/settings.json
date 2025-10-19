@@ -2,7 +2,9 @@
     "cSpell.words": [
         "aeiou",
         "akitas",
+        "Deque",
         "dinglebit",
+        "Flamegraph",
         "icub",
         "itertools",
         "LSHIFT",
@@ -21,6 +23,7 @@
         "qjhvhtzxzqqjkmpb",
         "robo",
         "RSHIFT",
+        "rsplit",
         "rustc",
         "santas",
         "serde",

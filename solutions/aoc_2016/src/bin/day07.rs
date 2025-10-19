@@ -1,12 +1,10 @@
 use std::time::Instant;
 
+use rustc_hash::FxHashSet;
+
 const INPUT: &str = include_str!("inputs/day07.txt");
 
-type Input<'a> = Vec<&'a str>;
-
-fn parse_input(input: &'_ str) -> Input<'_> {
-    input.lines().collect()
-}
+type Input<'a> = Vec<(Vec<&'a str>, Vec<&'a str>)>;
 
 fn split_brackets(mut input: &str) -> (Vec<&str>, Vec<&str>) {
     let mut out = Vec::new();
@@ -26,6 +24,10 @@ fn split_brackets(mut input: &str) -> (Vec<&str>, Vec<&str>) {
     (out, inside)
 }
 
+fn parse_input(input: &'_ str) -> Input<'_> {
+    input.lines().map(split_brackets).collect()
+}
+
 fn contains_abba(chunk: &&str) -> bool {
     chunk
         .chars()
@@ -37,30 +39,28 @@ fn contains_abba(chunk: &&str) -> bool {
 fn p1(input: &Input) -> usize {
     input
         .iter()
-        .filter(|l| {
-            let (outside, inside) = split_brackets(l);
+        .filter(|(outside, inside)| {
             outside.iter().any(contains_abba) && !inside.iter().any(contains_abba)
         })
         .count()
 }
 
 // Find and the ABA groupings and return their equivalent BABs.
-fn find_abas(chunk: &&str) -> Vec<String> {
+fn find_abas(chunk: &&str) -> FxHashSet<String> {
     chunk
         .chars()
         .collect::<Vec<_>>()
         .windows(3)
         .filter(|w| w[0] == w[2] && w[0] != w[1])
         .map(|w| format!("{}{}{}", w[1], w[0], w[1]))
-        .collect::<Vec<_>>()
+        .collect::<FxHashSet<_>>()
 }
 
 fn p2(input: &Input) -> usize {
     input
         .iter()
-        .filter(|l| {
-            let (outside, inside) = split_brackets(l);
-            let abas = outside.iter().flat_map(find_abas).collect::<Vec<_>>();
+        .filter(|(outside, inside)| {
+            let abas = outside.iter().flat_map(find_abas).collect::<FxHashSet<_>>();
             inside
                 .iter()
                 .any(|chunk| abas.iter().any(|a| chunk.contains(a)))

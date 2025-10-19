@@ -91,7 +91,7 @@ fn p1((zero, locations, grid): &Input) -> Result<usize> {
         .collect::<FxHashMap<(Point, Point), usize>>();
 
     // Go through all the permutations and find the smallest.
-    let min = locations
+    Ok(locations
         .iter()
         .permutations(locations.len())
         .filter(|p| p[0] == zero)
@@ -102,8 +102,7 @@ fn p1((zero, locations, grid): &Input) -> Result<usize> {
                 .sum()
         })
         .min()
-        .unwrap();
-    Ok(min)
+        .unwrap())
 }
 
 fn p2((zero, locations, grid): &Input) -> Result<usize> {
@@ -158,4 +157,3 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-

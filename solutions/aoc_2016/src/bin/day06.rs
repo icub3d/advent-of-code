@@ -4,39 +4,40 @@ use rustc_hash::FxHashMap;
 
 const INPUT: &str = include_str!("inputs/day06.txt");
 
-type Input<'a> = Vec<&'a str>;
+type Input<'a> = Vec<FxHashMap<char, usize>>;
 
 fn parse_input(input: &'_ str) -> Input<'_> {
-    input.lines().collect()
+    let lines = input.lines().collect::<Vec<_>>();
+    let mut frequencies: Vec<FxHashMap<char, usize>> = vec![FxHashMap::default(); lines[0].len()];
+    lines.iter().for_each(|l| {
+        for (idx, ch) in l.chars().enumerate() {
+            *frequencies[idx].entry(ch).or_insert(0) += 1;
+        }
+    });
+    frequencies
 }
 
 fn p1(input: &Input) -> String {
-    let mut frequencies: Vec<FxHashMap<char, usize>> = vec![FxHashMap::default(); input[0].len()];
-
-    input.iter().for_each(|l| {
-        l.chars().enumerate().for_each(|(i, c)| {
-            *frequencies[i].entry(c).or_insert(0) += 1;
-        });
-    });
-
-    frequencies
-        .iter()
-        .map(|m| m.iter().max_by_key(|&(_, c)| c).map(|(c, _)| c).unwrap())
-        .collect()
+    solve_by_cmp(input, usize::cmp)
 }
 
 fn p2(input: &Input) -> String {
-    let mut frequencies: Vec<FxHashMap<char, usize>> = vec![FxHashMap::default(); input[0].len()];
+    solve_by_cmp(input, |a, b| b.cmp(a))
+}
 
-    input.iter().for_each(|l| {
-        l.chars().enumerate().for_each(|(i, c)| {
-            *frequencies[i].entry(c).or_insert(0) += 1;
-        });
-    });
-
-    frequencies
+fn solve_by_cmp<F>(input: &Input, cmp: F) -> String
+where
+    F: Fn(&usize, &usize) -> std::cmp::Ordering,
+{
+    input
         .iter()
-        .map(|m| m.iter().min_by_key(|&(_, c)| c).map(|(c, _)| c).unwrap())
+        .map(|column| {
+            column
+                .iter()
+                .max_by(|a, b| cmp(a.1, b.1))
+                .map(|(ch, _)| *ch)
+                .unwrap()
+        })
         .collect()
 }
 

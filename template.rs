@@ -2,6 +2,7 @@ use std::{error::Error, time::Instant};
 
 const INPUT: &str = include_str!("inputs/[DAY].txt");
 
+type Int = i32;
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Input<'a> = Vec<&'a str>;
 

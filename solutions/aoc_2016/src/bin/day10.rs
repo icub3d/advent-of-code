@@ -52,30 +52,28 @@ impl BotRule {
     }
 }
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type Input<'a> = (Vec<(usize, usize)>, FxHashMap<usize, BotRule>);
 
-fn parse_input(input: &'_ str) -> Input<'_> {
-    input.lines().fold(
+fn parse_input(input: &'_ str) -> Result<Input<'_>> {
+    input.lines().try_fold(
         (Vec::new(), FxHashMap::default()),
         |(mut values, mut rules), line| {
             let parts = line.split_whitespace().collect::<Vec<_>>();
             match parts[0] {
                 "value" => {
-                    values.push((
-                        parts[5].parse::<usize>().unwrap(),
-                        parts[1].parse::<usize>().unwrap(),
-                    ));
-                    (values, rules)
+                    values.push((parts[5].parse::<usize>()?, parts[1].parse::<usize>()?));
+                    Ok((values, rules))
                 }
                 "bot" => {
                     rules.insert(
-                        parts[1].parse().unwrap(),
+                        parts[1].parse::<usize>()?,
                         BotRule::new(parts[5], parts[6], parts[10], parts[11]),
                     );
-                    (values, rules)
+                    Ok((values, rules))
                 }
 
-                _ => panic!("invalid line: {}", line),
+                _ => Err(Box::from(format!("invalid line: {}", line))),
             }
         },
     )
@@ -138,13 +136,15 @@ fn p2(input: &Input) -> usize {
         .product()
 }
 
-fn main() {
+fn main() -> Result<()> {
     let now = Instant::now();
-    let input = parse_input(INPUT);
+    let input = parse_input(INPUT)?;
     let solution = p1(&input);
     println!("p1 {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
     let solution = p2(&input);
     println!("p2 {:?} {}", now.elapsed(), solution);
+
+    Ok(())
 }
