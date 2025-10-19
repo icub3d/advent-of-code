@@ -445,8 +445,6 @@ export def "aoc yt" [
         upload-gist $year $day
     }
 
-    # Parse JSON
-    let data = (open --raw $file | from json)
 
     # Build problem URL
     let problem_url = $"https://adventofcode.com/($year)/day/($day)"
@@ -457,6 +455,22 @@ export def "aoc yt" [
     print $"Problem: ($problem_url)"
     print $"Solution: ($solution_url)"
     print ""
+
+    aoc stages $file
+
+}
+
+export def "aoc stages" [file: string] {
+    let file = ($file | path expand)
+
+    # Validate file exists
+    if not ($file | path exists) {
+        print-error $"JSON file not found: '($file)'"
+        return
+    }
+
+    # Parse JSON
+    let data = (open --raw $file | from json)
 
     # Get stage times (fall back to empty if missing)
     let stages = ($data | get stageTimes | default [])
@@ -469,12 +483,28 @@ export def "aoc yt" [
         return
     }
 
-    # Print timestamp lines, converting startMs (milliseconds) to a 'M:SS' format.
+    # Print timestamp lines, converting startMs (milliseconds) to either 'M:SS' or 'H:MM:SS'.
     for $st in $stages {
         let start_ms = ($st | get startMs | default 0)
-        let mins = ($start_ms / 60000 | into int)
-        let secs = (($start_ms mod 60000) / 1000 | into int)
-        let time_str = (if $secs < 10 { $"($mins):0($secs)" } else { $"($mins):($secs)" })
+        let total_secs = ($start_ms / 1000 | into int)
+        let hours = (($total_secs / 3600) | into int)
+        let mins = ((($total_secs mod 3600) / 60) | into int)
+        let secs = (($total_secs mod 60) | into int)
+
+        let time_str = (
+            if $hours > 0 {
+                # H:MM:SS — zero-pad minutes and seconds to 2 digits
+                if $mins < 10 {
+                    if $secs < 10 { $"($hours):0($mins):0($secs)" } else { $"($hours):0($mins):($secs)" }
+                } else {
+                    if $secs < 10 { $"($hours):($mins):0($secs)" } else { $"($hours):($mins):($secs)" }
+                }
+            } else {
+                # M:SS — seconds zero-padded
+                if $secs < 10 { $"($mins):0($secs)" } else { $"($mins):($secs)" }
+            }
+        )
+
         let name = ($st | get stageName | default "Unnamed Stage")
         print $"($time_str) ($name)"
     }
