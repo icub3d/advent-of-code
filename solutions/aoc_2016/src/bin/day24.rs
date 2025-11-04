@@ -72,7 +72,7 @@ fn p1((zero, locations, grid): &Input) -> Result<usize> {
         Point::new(-1, 0),
     ];
 
-    // Use dijkstra (bfs) and make a map of (p1, p2) -> dist
+    // // Use dijkstra (bfs) and make a map of (p1, p2) -> dist
     let neighbors = |p: &Point| {
         deltas
             .iter()
@@ -81,16 +81,29 @@ fn p1((zero, locations, grid): &Input) -> Result<usize> {
             .map(|p| (p, 1))
             .collect::<Vec<(Point, usize)>>()
     };
-    let distances = locations
-        .iter()
-        .cartesian_product(locations.iter())
-        .flat_map(|(l, r)| {
-            let (_, dist) = dijkstra(l, neighbors, |p| p == r).unwrap();
-            vec![((*l, *r), dist), ((*r, *l), dist)]
-        })
-        .collect::<FxHashMap<(Point, Point), usize>>();
+    // let distances = locations
+    //     .iter()
+    //     .cartesian_product(locations.iter())
+    //     .flat_map(|(l, r)| {
+    //         let (_, dist) = dijkstra(l, neighbors, |p| p == r).unwrap();
+    //         vec![((*l, *r), dist), ((*r, *l), dist)]
+    //     })
+    //     .collect::<FxHashMap<(Point, Point), usize>>();
 
     // Go through all the permutations and find the smallest.
+    // Ok(locations
+    //     .iter()
+    //     .permutations(locations.len())
+    //     .filter(|p| p[0] == zero)
+    //     .map(|p| {
+    //         p.iter()
+    //             .tuple_windows()
+    //             .map(|(l, r)| distances[&(**l, **r)])
+    //             .sum()
+    //     })
+    //     .min()
+    //     .unwrap())
+    let mut cache: FxHashMap<(&Point, &Point), usize> = FxHashMap::default();
     Ok(locations
         .iter()
         .permutations(locations.len())
@@ -98,7 +111,14 @@ fn p1((zero, locations, grid): &Input) -> Result<usize> {
         .map(|p| {
             p.iter()
                 .tuple_windows()
-                .map(|(l, r)| distances[&(**l, **r)])
+                .map(|(l, r)| {
+                    if let Some(dist) = cache.get(&(*l, *r)) {
+                        return *dist;
+                    }
+                    let dist = dijkstra(*l, neighbors, |p| p == *r).unwrap().1;
+                    cache.insert((*l, *r), dist);
+                    dist
+                })
                 .sum()
         })
         .min()
