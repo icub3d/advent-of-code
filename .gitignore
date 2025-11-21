@@ -22,5 +22,4 @@ target
 
 
 # Advent of Code Specific
-solutions/**/*.md
-solutions/**/inputs
+**/inputs
