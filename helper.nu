@@ -1,5 +1,7 @@
 #!/usr/bin/env nu
 
+source ~/.config/nushell/config.nu
+
 def get-input [workspace: string, name: string] {
     if not ("AOC_SESSION" in $env) {
         print -e "AOC_SESSION environment variable not set."
@@ -53,12 +55,24 @@ def get-target [workspace: string, name: string, part="1": string] {
   # Right now we don't do anything here.
 }
 
+def youtube [year: int, day: int] {
+  let day_str = if $day < 10 { $"0($day)" } else { $"($day)" };
+
+  let url = $"https://adventofcode.com/($year)/day/($day)" 
+  let times = $"~/Videos/($year)-($day_str).json" 
+  let desc = $"Solution for Advent of Code ($year) Day ($day)";
+  let file = $"aoc_($year)/src/bin/day($day_str).rs";
+
+  youtube-description $url $times $desc $file
+}
+
 def main [command?: string, ...args] {
   if ($command | is-empty) {
     print "Usage: helper.nu <command> [args...]"
     print "Available commands:"
     print "  get-input <workspace> <name> [part]"
     print "  get-target <workspace> <name> [part]"
+    print "  youtube <workspace> <name>"
     return
   }
 
@@ -84,11 +98,21 @@ def main [command?: string, ...args] {
       let part = (if ($args | length) >= 3 { $args | get 2 } else { "1" })
       get-target $workspace $name $part
     }
+    "youtube" => {
+      if ($args | length) < 2 {
+        print "Usage: youtube <year> <quest>"
+        return
+      }
+      let year = ($args | get 0 | into int)
+      let quest = ($args | get 1 | into int)
+      youtube $year $quest
+    }
     _ => {
       print $"Unknown command: ($command)"
       print "Available commands:"
       print "  get-input <workspace> <name> [part]"
       print "  get-target <workspace> <name> [part]"
+      print "  youtube <year> <quest>"
     }
   }
 }
