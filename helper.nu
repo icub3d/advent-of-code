@@ -55,6 +55,39 @@ def get-target [workspace: string, name: string, part="1": string] {
   # Right now we don't do anything here.
 }
 
+def show [workspace: string, name: string] {
+    if not ("AOC_SESSION" in $env) {
+        print -e "AOC_SESSION environment variable not set."
+        return
+    }
+
+    let year = ($workspace | split row '_' | last)
+    let day = ($name | str replace 'day' '' | into int)
+
+    let url = $"https://adventofcode.com/($year)/day/($day)"
+    let session_cookie = $env.AOC_SESSION
+    let user_agent = "github.com/icub3d/advent-of-code by joshua.marshian@gmail.com"
+
+    try {
+        let response = http get --headers {
+                Cookie: $"session=($session_cookie)"
+                "User-Agent": $user_agent
+            } $url
+
+        $response | pup .day-desc --charset UTF-8 --pre | w3m -T text/html -dump -cols 10000 -no-graph
+    } catch { |error|
+        if ($error.msg | str contains "404") {
+            print -e "Reason: Received status 404. The puzzle for this day might not be unlocked yet."
+        } else if ($error.msg | str contains "401") {
+            print -e "Reason: Received status 401. Your AOC_SESSION cookie might be invalid or expired."
+        } else if ($error.msg | str contains "500") {
+            print -e "Reason: Received status 500. Advent of Code might be having server issues."
+        } else {
+            print -e $"Reason: ($error.msg)"
+        }
+    }
+}
+
 def youtube [year: int, day: int] {
   let day_str = if $day < 10 { $"0($day)" } else { $"($day)" };
 
@@ -72,6 +105,7 @@ def main [command?: string, ...args] {
     print "Available commands:"
     print "  get-input <workspace> <name> [part]"
     print "  get-target <workspace> <name> [part]"
+    print "  show <workspace> <name>"
     print "  youtube <workspace> <name>"
     return
   }
@@ -98,6 +132,15 @@ def main [command?: string, ...args] {
       let part = (if ($args | length) >= 3 { $args | get 2 } else { "1" })
       get-target $workspace $name $part
     }
+    "show" => {
+      if ($args | length) < 2 {
+        print "Usage: show <workspace> <name>"
+        return
+      }
+      let workspace = ($args | get 0)
+      let name = ($args | get 1)
+      show $workspace $name
+    }
     "youtube" => {
       if ($args | length) < 2 {
         print "Usage: youtube <year> <quest>"
@@ -112,6 +155,7 @@ def main [command?: string, ...args] {
       print "Available commands:"
       print "  get-input <workspace> <name> [part]"
       print "  get-target <workspace> <name> [part]"
+      print "  show <workspace> <name>"
       print "  youtube <year> <quest>"
     }
   }

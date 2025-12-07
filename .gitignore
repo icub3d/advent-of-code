@@ -23,3 +23,7 @@ target
 
 # Advent of Code Specific
 **/inputs
+
+
+cachegrind*
+perf.data*
