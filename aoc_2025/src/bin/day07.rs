@@ -17,21 +17,90 @@ fn p1(input: &str) -> usize {
     beams.insert(grid[0].iter().position(|&c| c == 'S').unwrap());
 
     let mut splits = 0;
-    for row in &grid {
+    for row in grid.iter().step_by(2) {
         // For each row, find all the splitters.
-        for (i, _) in row.iter().enumerate().filter(|(_, c)| **c == '^') {
+        for (column, _) in row.iter().enumerate().filter(|(_, c)| **c == '^') {
             // If a beam is going to hit the splitter, update out count, add the splits and remove
             // ourself.
-            if beams.contains(&i) {
+            if beams.contains(&column) {
                 splits += 1;
-                beams.insert(i + 1);
-                beams.insert(i - 1);
-                beams.remove(&i);
+                beams.insert(column + 1);
+                beams.insert(column - 1);
+                beams.remove(&column);
             }
         }
     }
 
     splits
+}
+
+#[derive(Copy, Clone)]
+struct BitMask {
+    mask: [u128; 2],
+}
+
+impl BitMask {
+    fn new() -> Self {
+        Self { mask: [0; 2] }
+    }
+
+    fn set(&mut self, index: usize) {
+        if index > 128 {
+            self.mask[1] |= 1u128 << (index - 128);
+        } else {
+            self.mask[0] |= 1u128 << index;
+        }
+    }
+
+    fn unset(&mut self, index: usize) {
+        if index > 128 {
+            self.mask[1] &= !(1u128 << (index - 128));
+        } else {
+            self.mask[0] &= !(1u128 << index);
+        }
+    }
+
+    fn is_set(&self, index: usize) -> bool {
+        if index > 128 {
+            (self.mask[1] & (1u128 << (index - 128))) != 0
+        } else {
+            (self.mask[0] & (1u128 << index)) != 0
+        }
+    }
+}
+
+fn p1_fast(input: &[u8]) -> usize {
+    // Get the stride and lines of the grid.
+    let stride = input.iter().position(|b| *b == b'\n').unwrap() + 1;
+    let lines = input.len().div_ceil(stride);
+
+    // Track our beams as a bitmask.
+    let mut beams = BitMask::new();
+    beams.set(input.iter().position(|b| *b == b'S').unwrap());
+
+    // Go through each of the lines and find the beams that overlap with splitters.
+    (0..lines)
+        .step_by(2)
+        .map(|index| &input[stride * index..stride * index + stride])
+        .map(|row| {
+            let mut splits = 0;
+            beams = row.iter().enumerate().filter(|(_, v)| **v == b'^').fold(
+                beams,
+                |mut acc, (i, _)| {
+                    // If we found a beam and splitter that overlap, increment our splits and
+                    // update our mask.
+                    if acc.is_set(i) {
+                        splits += 1;
+                        acc.unset(i);
+                        acc.set(i + 1);
+                        acc.set(i - 1);
+                    }
+                    acc
+                },
+            );
+            splits
+        })
+        .sum()
 }
 
 fn p2(input: &str) -> usize {
@@ -58,38 +127,6 @@ fn p2(input: &str) -> usize {
     beams.values().sum()
 }
 
-fn p1_fast(input: &[u8]) -> usize {
-    // Get the stride and lines of the grid.
-    let stride = input.iter().position(|b| *b == b'\n').unwrap() + 1;
-    let lines = input.len().div_ceil(stride);
-
-    // Track our beams as a bitmask.
-    let mut beams = 0u128;
-    beams |= 1u128 << input.iter().position(|b| *b == b'S').unwrap();
-
-    // Go through each of the lines and find the beams that overlap with splitters.
-    (0..lines)
-        .map(|index| &input[stride * index..stride * index + stride])
-        .map(|line| {
-            let mut splits = 0;
-            beams = line
-                .iter()
-                .enumerate()
-                .filter(|(i, v)| **v == b'^' && beams & (1u128 << i) != 0)
-                .fold(beams, |mut acc, (i, _)| {
-                    // If we found a beam and splitter that overlap, increment our splits and
-                    // update our mask.
-                    splits += 1;
-                    acc &= !(1u128 << i);
-                    acc |= 1u128 << (i + 1);
-                    acc |= 1u128 << (i - 1);
-                    acc
-                });
-            splits
-        })
-        .sum()
-}
-
 fn p2_fast(input: &[u8]) -> usize {
     let stride = input.iter().position(|b| *b == b'\n').unwrap() + 1;
     let lines = input.len().div_ceil(stride);
@@ -98,7 +135,8 @@ fn p2_fast(input: &[u8]) -> usize {
     let mut timelines = [0usize; 142]; // magic number, lol
     timelines[input.iter().position(|b| *b == b'S').unwrap()] = 1;
 
-    for index in 0..lines {
+    // We can step by two because the input has empty alternating rows.
+    for index in (0..lines).step_by(2) {
         // Update our timelines when we encounter a splitter.
         let mut next_beams = timelines;
         for (i, _) in input[stride * index..stride * index + stride]
