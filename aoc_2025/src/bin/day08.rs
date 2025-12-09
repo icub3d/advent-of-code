@@ -27,13 +27,14 @@ impl From<&str> for Point {
 impl Point {
     // Calculate distance
     // https://en.wikipedia.org/wiki/Euclidean_distance#Higher_dimensions
-    fn distance(&self, rhs: &Point) -> f64 {
+    fn order(&self, rhs: &Point) -> f64 {
         let dx = rhs.x - self.x;
         let dy = rhs.y - self.y;
         let dz = rhs.z - self.z;
 
         // The right distance includes sqrt(), we can (very slightly) optimize since we are only
         // interested in order.
+        //
         // (dx.powi(2) + dy.powi(2) + dz.powi(2)).sqrt()
         dx.powi(2) + dy.powi(2) + dz.powi(2)
     }
@@ -48,7 +49,7 @@ struct DisjointSet {
     parent: Vec<usize>,
     // Track the size of each set (only parent is accurate for entire group).
     size: Vec<usize>,
-    // Track the number of sets.
+    // Track the number of sets. We need this for p3.
     count: usize,
 }
 
@@ -69,13 +70,12 @@ impl DisjointSet {
         self.parent[i]
     }
 
-    // For p3, we are interested in the "last merge", so we return true if we made a group and then p3 can check if that merge was the last.
-    fn union(&mut self, i: usize, j: usize) -> bool {
+    fn union(&mut self, i: usize, j: usize) {
         let root_i = self.find(i);
         let root_j = self.find(j);
 
         if root_i == root_j {
-            return false;
+            return;
         }
 
         let (p1, p2) = match self.size[root_i] < self.size[root_j] {
@@ -85,7 +85,6 @@ impl DisjointSet {
         self.parent[p1] = p2;
         self.size[p2] += self.size[p1];
         self.count -= 1;
-        true
     }
 }
 
@@ -93,6 +92,7 @@ impl DisjointSet {
 fn p1(input: &str, limit: usize) -> usize {
     let points = parse(input).collect::<Vec<_>>();
 
+    // Get the distances among all points.
     let mut dists = points
         .iter()
         .enumerate()
@@ -101,7 +101,7 @@ fn p1(input: &str, limit: usize) -> usize {
                 .iter()
                 .enumerate()
                 // BUG(FIXED): i2 is from i1+1
-                .map(move |(i2, p2)| ((i1, i1 + 1 + i2), p1.distance(p2)))
+                .map(move |(i2, p2)| ((i1, i1 + 1 + i2), p1.order(p2)))
         })
         .collect::<Vec<((usize, usize), f64)>>();
 
@@ -123,7 +123,7 @@ fn p1(input: &str, limit: usize) -> usize {
     ds.parent
         .iter()
         .enumerate()
-        .filter(|(i, p)| i == *p)
+        .filter(|(i, p)| i == *p) // Parent
         .map(|(i, _)| ds.size[i])
         .sorted_unstable_by(|a, b| b.cmp(a)) // BUG(FIXED): largest
         .take(3)
@@ -141,7 +141,7 @@ fn p2(input: &str) -> usize {
             points[i1 + 1..]
                 .iter()
                 .enumerate()
-                .map(move |(i2, p2)| ((i1, i1 + 1 + i2), p1.distance(p2)))
+                .map(move |(i2, p2)| ((i1, i1 + 1 + i2), p1.order(p2)))
         })
         .collect::<Vec<((usize, usize), f64)>>();
 
@@ -151,7 +151,8 @@ fn p2(input: &str) -> usize {
     let mut ds = DisjointSet::new(points.len());
     for ((i1, i2), _) in dists {
         // Go until we find the last merge.
-        if ds.union(i1, i2) && ds.count == 1 {
+        ds.union(i1, i2);
+        if ds.count == 1 {
             return (points[i1].x * points[i2].x) as usize;
         }
     }
