@@ -3,6 +3,9 @@ use std::ops::{Add, Index, IndexMut};
 use std::time::Instant;
 
 use itertools::Itertools;
+// TODO: Cool trick is that you can sort of infer that the largest box will be along the horizontal lines, so you can just sort of check them to see which are largest. https://www.reddit.com/r/adventofcode/comments/1phywvn/comment/nt2nnxw/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+
+// TODO: There is likely a bug here where we compress boxes of bad space and make it look good. See my drawing.
 
 // NOTE: I often break up impls to make it more understandable of how I went about solving.
 
@@ -45,6 +48,26 @@ fn p1(input: &str) -> usize {
         .unwrap()
 }
 
+// We use a "rectangle" is several places. It seemed more readable to make it in one place.
+#[derive(Debug, Clone, Copy)]
+struct Rect {
+    r1: usize,
+    c1: usize,
+    r2: usize,
+    c2: usize,
+}
+
+impl Rect {
+    fn new(r1: usize, c1: usize, r2: usize, c2: usize) -> Self {
+        Self {
+            r1: r1.min(r2),
+            c1: c1.min(c2),
+            r2: r1.max(r2),
+            c2: c1.max(c2),
+        }
+    }
+}
+
 // Impl add for adding our deltas.
 impl Add for Tile {
     type Output = Self;
@@ -77,26 +100,6 @@ impl Tile {
             .filter(move |t| {
                 t.row >= min.row && t.row <= max.row && t.col >= min.col && t.col <= max.col
             })
-    }
-}
-
-// We use a "rectangle" is several places. It seemed more readable to make it in one place.
-#[derive(Debug, Clone, Copy)]
-struct Rect {
-    r1: usize,
-    c1: usize,
-    r2: usize,
-    c2: usize,
-}
-
-impl Rect {
-    fn new(r1: usize, c1: usize, r2: usize, c2: usize) -> Self {
-        Self {
-            r1: r1.min(r2),
-            c1: c1.min(c2),
-            r2: r1.max(r2),
-            c2: c1.max(c2),
-        }
     }
 }
 
@@ -269,6 +272,7 @@ impl From<TileState> for usize {
         }
     }
 }
+
 impl CompressedGrid {
     // Let's build a prefix sum of tiles outside the boundary. Each (r,c) pair contains how many
     // tiles were outside the rectangle from (0,0). We maintain padding (all the +1) to simplify
@@ -318,6 +322,40 @@ fn p2_pfx(input: &str) -> usize {
         .unwrap()
 }
 
+pub fn p2_online(input: &str) -> usize {
+    let points: Vec<Tile> = input.lines().map(Tile::from).collect();
+    let edges: Vec<(&Tile, &Tile)> = points
+        .windows(2)
+        .map(|vertices| (&vertices[0], &vertices[1]))
+        .chain([(&points[points.len() - 1], &points[0])]) // closing edge
+        .collect();
+    let mut possible_rects: Vec<_> = points
+        .iter()
+        .enumerate()
+        .flat_map(|(i, p1)| points[i + 1..].iter().map(move |p2| (p1, p2, p1.area(p2))))
+        .collect();
+    possible_rects.sort_by_key(|(_, _, a)| *a);
+    possible_rects
+        .into_iter()
+        .rev()
+        .find(|(p1, p2, _)| {
+            // all edges in the full polygon must be:
+            //   - leftmost point of edge must be left of this rect OR
+            //   - rightmost point of edge must be right of this rect OR
+            //   - topmost point of edge must be above this rect OR
+            //   - bottommost point of edge must be below this rect
+            edges.iter().all(|(start, end)| {
+                let before = p1.col.max(p2.col) <= start.col.min(end.col);
+                let after = p1.col.min(p2.col) >= start.col.max(end.col);
+                let above = p1.row.max(p2.row) <= start.row.min(end.row);
+                let below = p1.row.min(p2.row) >= start.row.max(end.row);
+                before || after || above || below
+            })
+        })
+        .expect("possible should not be empty")
+        .2
+}
+
 fn main() {
     let now = Instant::now();
     let solution = p1(INPUT);
@@ -331,6 +369,11 @@ fn main() {
     let now = Instant::now();
     let solution = p2_pfx(INPUT);
     println!("p2_pfx {:?} {}", now.elapsed(), solution);
+    assert!(solution == 1516172795);
+
+    let now = Instant::now();
+    let solution = p2_online(INPUT);
+    println!("p2_online {:?} {}", now.elapsed(), solution);
     assert!(solution == 1516172795);
 }
 
