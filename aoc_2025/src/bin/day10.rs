@@ -23,6 +23,7 @@ impl From<&str> for Machine {
         let lights = parts
             .next()
             .map(|l| {
+                // We rev here to make calculating below easier.
                 l.trim_matches(['[', ']'])
                     .chars()
                     .rev()
@@ -81,7 +82,7 @@ fn p1(input: &str) -> usize {
                     }
                 }
             }
-            0
+            unreachable!()
         })
         .sum()
 }
@@ -127,6 +128,7 @@ impl Matrix {
         matrix
     }
 
+    // https://en.wikipedia.org/wiki/Gaussian_elimination
     fn gaussian_elimination(&mut self) {
         let mut pivot = 0;
 
