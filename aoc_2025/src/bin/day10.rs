@@ -2,6 +2,7 @@ use std::{collections::VecDeque, time::Instant};
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use rustc_hash::FxHashSet;
+use z3::{Optimize, ast::Int};
 
 const INPUT: &str = include_str!("inputs/day10.txt");
 const EPSILON: f64 = 1e-9;
@@ -256,6 +257,64 @@ fn p2(input: &str) -> usize {
         .sum()
 }
 
+fn p2_z3(input: &str) -> usize {
+    parse(input)
+        .par_bridge()
+        .map(|machine| {
+            // Create the optimizer and some shared values.
+            let optimizer = Optimize::new();
+            let zero = Int::from_i64(0);
+
+            // Create our joltages.
+            let mut joltages = machine
+                .joltages
+                .iter()
+                .map(|_| Int::from_i64(0))
+                .collect::<Vec<_>>();
+
+            // Create our buttons and add them as expressions to our joltages.
+            let buttons = machine
+                .buttons
+                .iter()
+                .enumerate()
+                .map(|(i, button)| {
+                    // Create our integer for this buttons presses and assert it be greater than zero.
+                    let var = Int::fresh_const(&format!("button-{}", i));
+                    optimizer.assert(&var.ge(&zero));
+
+                    // Add this button to each of it's connect joltages.
+                    button.iter().for_each(|index| {
+                        joltages[*index] = &joltages[*index] + &var;
+                    });
+                    var
+                })
+                .collect::<Vec<_>>();
+
+            // Make all of joltages sum to the button presses.
+            joltages.iter().enumerate().for_each(|(i, joltage)| {
+                optimizer.assert(&joltage.eq(Int::from_i64(machine.joltages[i] as i64)))
+            });
+
+            // Tell the optimizer that we are optimizing on the mimimum number of accumulated presses.
+            let total_presses = buttons.iter().fold(Int::from_i64(0), |acc, x| acc + x);
+            optimizer.minimize(&total_presses);
+
+            // Presumably this should work, so ignoring error checking. But we check to do the
+            // solve and then get the result and return it.
+            match optimizer.check(&[]) {
+                z3::SatResult::Sat => optimizer
+                    .get_model()
+                    .unwrap()
+                    .eval(&total_presses, true)
+                    .unwrap()
+                    .as_i64()
+                    .unwrap() as usize,
+                _ => unreachable!(),
+            }
+        })
+        .sum()
+}
+
 fn main() {
     let now = Instant::now();
     let solution = p1(INPUT);
@@ -265,6 +324,11 @@ fn main() {
     let now = Instant::now();
     let solution = p2(INPUT);
     println!("p2 {:?} {}", now.elapsed(), solution);
+    assert_eq!(solution, 17820);
+
+    let now = Instant::now();
+    let solution = p2_z3(INPUT);
+    println!("p2_z3 {:?} {}", now.elapsed(), solution);
     assert_eq!(solution, 17820);
 }
 
@@ -282,5 +346,10 @@ mod tests {
     #[test]
     fn test_p2() {
         assert_eq!(p2(INPUT), 33);
+    }
+
+    #[test]
+    fn test_p2_z3() {
+        assert_eq!(p2_z3(INPUT), 33);
     }
 }
