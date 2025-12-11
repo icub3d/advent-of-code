@@ -1,133 +1,8 @@
 use std::time::Instant;
 
-// TODO see _fast solution for recap.
-// 🚀 Solution 🚀
-// p1 48.661µs 6757749566978
-// p2 49.283µs 10603075273949
-// p1_fast 15.93µs 6757749566978
-// p2_fast 13.035µs 10603075273949
-
 const INPUT: &[u8] = include_bytes!("inputs/day06.txt");
 
-#[derive(Debug)]
-enum Operator {
-    Add,
-    Mul,
-}
-
-impl From<u8> for Operator {
-    fn from(value: u8) -> Self {
-        match value {
-            b'*' => Operator::Mul,
-            _ => Operator::Add,
-        }
-    }
-}
-
-// We use the operator lines to delineate where blocks of equations to solve exist.
-fn chunk_operators(op: &[u8]) -> impl Iterator<Item = &[u8]> {
-    let mut remainder = op;
-
-    std::iter::from_fn(move || {
-        // Are we done?
-        if remainder.is_empty() {
-            return None;
-        }
-
-        // Find the position of the next operator (or end).
-        let end = remainder
-            .iter()
-            .enumerate()
-            .skip(1)
-            .find(|(_, b)| **b != b' ')
-            .map(|(idx, _)| idx)
-            .unwrap_or(remainder.len());
-
-        // We'll return out chunk and process the remainder next.
-        let chunk = &remainder[..end];
-        remainder = &remainder[end..];
-        Some(chunk)
-    })
-}
-
-// Parse the given input by making blocks of equations and passing the blocks of numbers to the given mapper.
-fn parse<F>(input: &[u8], mut mapper: F) -> impl Iterator<Item = (Vec<usize>, Operator)>
-where
-    F: FnMut(&[&[u8]]) -> Vec<usize>,
-{
-    let grid = input
-        .split(|b| *b == b'\n')
-        .filter(|l| !l.is_empty())
-        .collect::<Vec<_>>();
-    let len = grid.len();
-    // use our operator to determine the size of each block.
-    chunk_operators(grid[len - 1]).scan(0, move |cur, op| {
-        // Get the block from each of the rest of the lines.
-        let numbers = grid[..len - 1]
-            .iter()
-            .map(|line| &line[*cur..*cur + op.len()])
-            .collect::<Vec<_>>();
-
-        // Update our scanner and return the mapped numbers and the operator.
-        *cur += op.len();
-        let op = Operator::from(op[0]);
-        Some((mapper(&numbers), op))
-    })
-}
-
-// Our mapper here is just to read all the "lines" and turn them into numbers.
-fn p1_mapper(block: &[&[u8]]) -> Vec<usize> {
-    block
-        .iter()
-        .map(|n| {
-            n.trim_ascii()
-                .iter()
-                .fold(0, |acc, b| acc * 10 + (b - b'0') as usize)
-        })
-        .collect::<Vec<_>>()
-}
-
 fn p1(input: &[u8]) -> usize {
-    // Get our operations and sum the results.
-    parse(input, p1_mapper)
-        .map(|(numbers, op)| match op {
-            Operator::Add => numbers.iter().sum::<usize>(),
-            Operator::Mul => numbers.iter().product(),
-        })
-        .sum()
-}
-
-// A helper function to turn a vertical slice of a block into a number.
-fn make_vertical_number(values: &[&[u8]], index: usize) -> usize {
-    let mut v = 0;
-    for vv in values {
-        if vv[index] == b' ' {
-            continue;
-        }
-        v = v * 10 + (vv[index] - b'0') as usize;
-    }
-    v
-}
-
-// Our mapper here should make the vertical numbers but we should ignore the empty line at the end (if we have one).
-fn p2_mapper(block: &[&[u8]]) -> Vec<usize> {
-    (0..block[0].len())
-        .filter(|i| !block.iter().all(|vv| vv[*i] == b' '))
-        .map(|i| make_vertical_number(block, i))
-        .collect::<Vec<_>>()
-}
-
-fn p2(input: &[u8]) -> usize {
-    // Do the same as p1 but with the vertical mapper.
-    parse(input, p2_mapper)
-        .map(|(numbers, op)| match op {
-            Operator::Add => numbers.iter().sum::<usize>(),
-            Operator::Mul => numbers.iter().product(),
-        })
-        .sum()
-}
-
-fn p1_fast(input: &[u8]) -> usize {
     // Determine how long each line will be.
     let stride = input.iter().position(|&b| b == b'\n').unwrap() + 1;
 
@@ -170,7 +45,7 @@ fn p1_fast(input: &[u8]) -> usize {
     total
 }
 
-fn p2_fast(input: &[u8]) -> usize {
+fn p2(input: &[u8]) -> usize {
     // Determine how long each line will be.
     let stride = input.iter().position(|&b| b == b'\n').unwrap() + 1;
 
@@ -222,18 +97,10 @@ fn p2_fast(input: &[u8]) -> usize {
 fn main() {
     let now = Instant::now();
     let solution = p1(INPUT);
-    println!("p1 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p2(INPUT);
-    println!("p2 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p1_fast(INPUT);
     println!("p1_fast {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
-    let solution = p2_fast(INPUT);
+    let solution = p2(INPUT);
     println!("p2_fast {:?} {}", now.elapsed(), solution);
 }
 
@@ -251,15 +118,5 @@ mod tests {
     #[test]
     fn test_p2() {
         assert_eq!(p2(INPUT), 3263827);
-    }
-
-    #[test]
-    fn test_p1_fast() {
-        assert_eq!(p1_fast(INPUT), 4277556);
-    }
-
-    #[test]
-    fn test_p2_fast() {
-        assert_eq!(p2_fast(INPUT), 3263827);
     }
 }

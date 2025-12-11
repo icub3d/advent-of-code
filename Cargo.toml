@@ -17,6 +17,7 @@ rayon = "1.11.0"
 indoc = "2.0"
 plotters = "0.3.7"
 catppuccin = "2.6.0"
+cached = "0.56.0"
 
 [profile.profiling]
 inherits = "release" 

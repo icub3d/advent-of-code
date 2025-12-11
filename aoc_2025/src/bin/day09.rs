@@ -243,7 +243,7 @@ impl CompressedGrid {
     }
 }
 
-fn p2(input: &str) -> usize {
+fn p2_old(input: &str) -> usize {
     // Create our compression grid from the tiles.
     let tiles = parse(input).collect::<Vec<_>>();
     let grid = CompressedGrid::new(&tiles);
@@ -301,7 +301,7 @@ impl CompressedGrid {
     }
 }
 
-fn p2_pfx(input: &str) -> usize {
+fn p2(input: &str) -> usize {
     // Now we can do the same thing, but instead use the prefix_sum values to calculate much
     // faster.
     let tiles = parse(input).collect::<Vec<_>>();
@@ -322,58 +322,19 @@ fn p2_pfx(input: &str) -> usize {
         .unwrap()
 }
 
-pub fn p2_online(input: &str) -> usize {
-    let points: Vec<Tile> = input.lines().map(Tile::from).collect();
-    let edges: Vec<(&Tile, &Tile)> = points
-        .windows(2)
-        .map(|vertices| (&vertices[0], &vertices[1]))
-        .chain([(&points[points.len() - 1], &points[0])]) // closing edge
-        .collect();
-    let mut possible_rects: Vec<_> = points
-        .iter()
-        .enumerate()
-        .flat_map(|(i, p1)| points[i + 1..].iter().map(move |p2| (p1, p2, p1.area(p2))))
-        .collect();
-    possible_rects.sort_by_key(|(_, _, a)| *a);
-    possible_rects
-        .into_iter()
-        .rev()
-        .find(|(p1, p2, _)| {
-            // all edges in the full polygon must be:
-            //   - leftmost point of edge must be left of this rect OR
-            //   - rightmost point of edge must be right of this rect OR
-            //   - topmost point of edge must be above this rect OR
-            //   - bottommost point of edge must be below this rect
-            edges.iter().all(|(start, end)| {
-                let before = p1.col.max(p2.col) <= start.col.min(end.col);
-                let after = p1.col.min(p2.col) >= start.col.max(end.col);
-                let above = p1.row.max(p2.row) <= start.row.min(end.row);
-                let below = p1.row.min(p2.row) >= start.row.max(end.row);
-                before || after || above || below
-            })
-        })
-        .expect("possible should not be empty")
-        .2
-}
-
 fn main() {
     let now = Instant::now();
     let solution = p1(INPUT);
     println!("p1 {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
+    let solution = p2_old(INPUT);
+    println!("p2_old {:?} {}", now.elapsed(), solution);
+    assert!(solution == 1516172795);
+
+    let now = Instant::now();
     let solution = p2(INPUT);
     println!("p2 {:?} {}", now.elapsed(), solution);
-    assert!(solution == 1516172795);
-
-    let now = Instant::now();
-    let solution = p2_pfx(INPUT);
-    println!("p2_pfx {:?} {}", now.elapsed(), solution);
-    assert!(solution == 1516172795);
-
-    let now = Instant::now();
-    let solution = p2_online(INPUT);
-    println!("p2_online {:?} {}", now.elapsed(), solution);
     assert!(solution == 1516172795);
 }
 
@@ -390,11 +351,11 @@ mod tests {
 
     #[test]
     fn test_p2_pfx() {
-        assert_eq!(p2_pfx(INPUT), 24);
+        assert_eq!(p2(INPUT), 24);
     }
 
     #[test]
     fn test_p2() {
-        assert_eq!(p2(INPUT), 24);
+        assert_eq!(p2_old(INPUT), 24);
     }
 }

@@ -14,44 +14,19 @@ fn parse(input: &str) -> impl Iterator<Item = RangeInclusive<usize>> {
 
 fn p1(input: &str) -> usize {
     parse(input)
-        .par_bridge()
         .flatten()
         .filter(|&v| {
-            // Convert to string and verify both halves are equal.
-            let s = v.to_string();
-            if !s.len().is_multiple_of(2) {
+            let digits = v.ilog10() + 1;
+            if !digits.is_multiple_of(2) {
                 return false;
             }
-            let (l, r) = s.split_at(s.len() / 2);
-            l == r
+            let denom = 10usize.pow(digits / 2);
+            v / denom == v % denom
         })
         .sum()
 }
 
 fn p2(input: &str) -> usize {
-    parse(input)
-        .par_bridge()
-        .flatten()
-        .filter(|&v| {
-            // Convert to string and check each length up to half.
-            let s = v.to_string();
-            for d in 1..=s.len() / 2 {
-                // Must equally divide.
-                if !s.len().is_multiple_of(d) {
-                    continue;
-                }
-                // Get the prefix and see if repeating it is equal to the original.
-                let prefix = &s[..d];
-                if prefix.repeat(s.len() / d) == s {
-                    return true;
-                }
-            }
-            false
-        })
-        .sum()
-}
-
-fn p2_int(input: &str) -> usize {
     parse(input)
         .par_bridge()
         .flatten()
@@ -92,10 +67,6 @@ fn main() {
     let now = Instant::now();
     let solution = p2(INPUT);
     println!("p2 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p2_int(INPUT);
-    println!("p2_int {:?} {}", now.elapsed(), solution);
 }
 
 #[cfg(test)]
@@ -110,12 +81,8 @@ mod tests {
     }
 
     #[test]
-    fn test_p2() {
+    fn test_p2_int() {
         assert_eq!(p2(INPUT), 4174379265);
     }
-
-    #[test]
-    fn test_p2_int() {
-        assert_eq!(p2_int(INPUT), 4174379265);
-    }
 }
+

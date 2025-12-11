@@ -295,7 +295,7 @@ fn p2_z3(input: &str) -> usize {
                 optimizer.assert(&joltage.eq(Int::from_i64(machine.joltages[i] as i64)))
             });
 
-            // Tell the optimizer that we are optimizing on the mimimum number of accumulated presses.
+            // Tell the optimizer that we are optimizing on the minimum number of accumulated presses.
             let total_presses = buttons.iter().fold(Int::from_i64(0), |acc, x| acc + x);
             optimizer.minimize(&total_presses);
 

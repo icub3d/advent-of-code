@@ -9,7 +9,7 @@ fn parse(input: &str) -> Vec<Vec<char>> {
     input.lines().map(|l| l.chars().collect()).collect()
 }
 
-fn p1(input: &str) -> usize {
+fn p1_original(input: &str) -> usize {
     let grid = parse(input);
 
     // Track our beams as a set.
@@ -69,7 +69,7 @@ impl BitMask {
     }
 }
 
-fn p1_fast(input: &[u8]) -> usize {
+fn p1(input: &[u8]) -> usize {
     // Get the stride and lines of the grid.
     let stride = input.iter().position(|b| *b == b'\n').unwrap() + 1;
     let lines = input.len().div_ceil(stride);
@@ -103,7 +103,7 @@ fn p1_fast(input: &[u8]) -> usize {
         .sum()
 }
 
-fn p2(input: &str) -> usize {
+fn p2_original(input: &str) -> usize {
     let grid = parse(input);
 
     // Track our timelines now in a map as they'll increase with each split.
@@ -127,7 +127,7 @@ fn p2(input: &str) -> usize {
     beams.values().sum()
 }
 
-fn p2_fast(input: &[u8]) -> usize {
+fn p2(input: &[u8]) -> usize {
     let stride = input.iter().position(|b| *b == b'\n').unwrap() + 1;
     let lines = input.len().div_ceil(stride);
 
@@ -157,20 +157,20 @@ fn p2_fast(input: &[u8]) -> usize {
 
 fn main() {
     let now = Instant::now();
-    let solution = p1(INPUT_STR);
+    let solution = p1_original(INPUT_STR);
+    println!("p1_original {:?} {}", now.elapsed(), solution);
+
+    let now = Instant::now();
+    let solution = p2_original(INPUT_STR);
+    println!("p2_original {:?} {}", now.elapsed(), solution);
+
+    let now = Instant::now();
+    let solution = p1(INPUT);
     println!("p1 {:?} {}", now.elapsed(), solution);
 
     let now = Instant::now();
-    let solution = p2(INPUT_STR);
+    let solution = p2(INPUT);
     println!("p2 {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p1_fast(INPUT);
-    println!("p1_fast {:?} {}", now.elapsed(), solution);
-
-    let now = Instant::now();
-    let solution = p2_fast(INPUT);
-    println!("p2_fast {:?} {}", now.elapsed(), solution);
 }
 
 #[cfg(test)]
@@ -182,21 +182,21 @@ mod tests {
 
     #[test]
     fn test_p1() {
-        assert_eq!(p1(INPUT), 21);
+        assert_eq!(p1_original(INPUT), 21);
     }
 
     #[test]
     fn test_p2() {
-        assert_eq!(p2(INPUT), 40);
+        assert_eq!(p2_original(INPUT), 40);
     }
 
     #[test]
     fn test_p1_fast() {
-        assert_eq!(p1_fast(INPUT_BYTES), 21);
+        assert_eq!(p1(INPUT_BYTES), 21);
     }
 
     #[test]
     fn test_p2_fast() {
-        assert_eq!(p2_fast(INPUT_BYTES), 40);
+        assert_eq!(p2(INPUT_BYTES), 40);
     }
 }
